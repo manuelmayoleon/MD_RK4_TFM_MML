@@ -24,7 +24,9 @@ implicit none
     INTEGER:: i,j,k,l,m
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: r,v !vector con posiciones y velocidades
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:)::sumv ! suma de velocidades para cada colision
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:)::densz ! densidad a lo largo de z
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: tmp !temperaturas en las dos direcciones del espacio
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz !densidad promedio en z en el tiempo 
     REAL(kind=8)::temp,tempz,H,longy,sigma,epsilon,rho !temperaturas en "y" y en "z", altura vertical y anchura, sigma==tamaño de la particula, rho=density
     REAL(kind=8)::alpha, vp  !! coeficiente de restitucion y velocidad que se introduce a traves de la pared 
     LOGICAL :: boolean,granular
@@ -39,7 +41,7 @@ implicit none
     !!! para deteminar el tiempo de cálculo
     REAL(kind=4):: start, finish
     character(len=10)::alfa,eps
-
+    INTEGER::partz !discretizacion en z para calcular la densidad
 
     !notar que consideramos KT=1
     !inicializamos variables
@@ -50,26 +52,29 @@ implicit none
     ! tempz=5.d00
     
     sigma=1.0d00
-    H=1.5*sigma
+    H=1.9*sigma
     n=500
     ! rho=0.06d00
 
-    rho=0.015d00
+    rho=0.06d00
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
-    ! rep=550000
-    rep=30000000
+    rep=500000
+    ! rep=30000000
     iter=1
 
-    alpha=0.95
-    ! alpha=1.0
+    ! alpha=0.95
+    alpha=1.0
     ! vp=0.001*temp
-    vp=0.0001
-    ! vp=0.0d0
-  
+    ! vp=0.0001
+    vp=0.0d0
+    
+
+    partz=8
 
 
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
+    ALLOCATE(densz(iter,rep,partz),denspromz(partz))
 
     write ( *, '(a)' ) ' '
     write ( *, '(a)' ) '            MD 2D SIMULATION                 '
@@ -110,13 +115,13 @@ implicit none
     
     ! If granular eqv true, the particles lost energy on each collision (inelastic disks) 
     !else, the collision is elastic between particles 
-    granular=.TRUE.
-    ! granular=.FALSE.
+    ! granular=.TRUE.
+    granular=.FALSE.
     
     ! If boolean eqv false, the particle is confined between two rigid plates 
     !else, the lower plate is vibrating in a sawtooth way 
-    boolean=.TRUE.
-    ! boolean=.FALSE.
+    ! boolean=.TRUE.
+    boolean=.FALSE.
 
     DO i=1,iter
         !inicializo los tiempos 
@@ -173,7 +178,28 @@ implicit none
                IF (j>1) THEN
                deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
                END IF
+
+              !obtener el número de particulas comprendidas en un intervalo.
+
+             
+               
+
+
         END DO
+
+
+        DO l=1,partz
+
+            DO  m=1,n
+                IF (r(m,2)<=real(l)*H/real(partz) .AND. r(m,2)>=real(l-1)*H/real(partz)) THEN 
+                    print*, real(l)*H/real(partz)
+                    print*, real(l-1)*H/real(partz)
+                    densz(i,j,l)= (densz(i,j,l)+1)
+                    ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
+                END IF
+            END DO
+
+       END DO 
 
     
         CALL superpuesto()
@@ -202,7 +228,11 @@ implicit none
         END DO
     END DO 
 
- 
+    DO l=1,partz
+
+        denspromz(l)=sum(densz(:,:,l))/(iter)  
+    
+    END DO 
    
     
     
@@ -233,6 +263,12 @@ implicit none
         WRITE(13,*) deltas(l)
     END DO
     CLOSE(13)
+
+    OPEN(14,FILE='densz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
+    DO l=1,partz
+        WRITE(14,*) denspromz(l)
+    END DO
+    CLOSE(14)
    
     call save_data_file()
  

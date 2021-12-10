@@ -8,8 +8,8 @@ from matplotlib.transforms import (
     Bbox, TransformedBbox, blended_transform_factory)
 
 
-temp= pd.read_csv("temperaturas_0.95_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
-tiempo= pd.read_csv("tiemposdecol_0.95.txt",names=["t"])
+temp= pd.read_csv("temperaturas_1.00_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
+tiempo= pd.read_csv("tiemposdecol_1.00.txt",names=["t"])
 
 x0=1.0
 y0=5.0
@@ -23,18 +23,19 @@ h=0.2
 
 
 def f(t1,t2,t):
-    alfa=0.95
+    alfa=1.0
     epsilon=0.5
-    rho=0.015
+    rho=0.06
     # return np.sqrt(np.pi)*(1+alfa)*epsilon*rho*np.sqrt(t1)*( -(1-alfa)*t1+epsilon**2.0*(-(5*alfa-1)*t1 +(3*alfa+1)*t2 )/12)
     return 2.0*(1+alfa)*epsilon*rho*np.sqrt(t1)*( -(1-alfa)*t1+epsilon**2.0*(-4.0*alfa*t1 +(3.0*alfa+1.0)*t2 )/12)/np.sqrt(np.pi)
     # return 4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
 
 def g(t1,t2,t):
-    alfa=0.95
+    alfa=1.0
     epsilon=0.5
-    rho=0.015
-    vp=0.0001
+    rho=0.06
+    # vp=0.0001
+    vp=0.0
     # return   2.0*np.sqrt(np.pi)*(1+alfa)*epsilon**3.0*rho*np.sqrt(t1)*( 0.5*(1+alfa)*t1-t2)/3.0 +2.0*vp*t2/epsilon
     return   2.0*(1+alfa)*epsilon**3.0*rho*np.sqrt(t1)*( 0.5*(1+alfa)*t1-t2)/(3.0*np.sqrt(np.pi)) +2.0*vp*t2/epsilon
     
