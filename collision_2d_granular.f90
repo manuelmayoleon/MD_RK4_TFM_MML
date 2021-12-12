@@ -52,14 +52,14 @@ implicit none
     ! tempz=5.d00
     
     sigma=1.0d00
-    H=1.9*sigma
+    H=1.5*sigma
     n=500
     ! rho=0.06d00
 
     rho=0.06d00
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
-    rep=500000
+    rep=550000
     ! rep=30000000
     iter=1
 
@@ -181,27 +181,27 @@ implicit none
 
               !obtener el número de particulas comprendidas en un intervalo.
 
-             
+               DO l=1,partz
+
+                DO  m=1,n
+                    IF (r(m,2)<=(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
+                            r(m,2)>=(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
+                        densz(i,j,l)= (densz(i,j,l)+1.0)
+                        ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
+                    END IF
+                END DO
+    
+              END DO 
                
 
 
         END DO
 
 
-        DO l=1,partz
+   
 
-            DO  m=1,n
-                IF (r(m,2)<=real(l)*H/real(partz) .AND. r(m,2)>=real(l-1)*H/real(partz)) THEN 
-                    print*, real(l)*H/real(partz)
-                    print*, real(l-1)*H/real(partz)
-                    densz(i,j,l)= (densz(i,j,l)+1)
-                    ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
-                END IF
-            END DO
-
-       END DO 
-
-    
+       
+       
         CALL superpuesto()
        
 
