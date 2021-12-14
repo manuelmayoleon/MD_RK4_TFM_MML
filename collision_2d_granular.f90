@@ -52,16 +52,19 @@ implicit none
     ! tempz=5.d00
     
     sigma=1.0d00
-    H=1.5*sigma
+    
+    ! H=1.5*sigma
+    H=1.9*sigma
     n=500
     ! rho=0.06d00
-
-    rho=0.06d00
+    ! rho=0.03d00
+    rho=0.2111d00
+    
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
     rep=550000
     ! rep=30000000
-    iter=1
+    iter=5
 
     ! alpha=0.95
     alpha=1.0
@@ -123,6 +126,9 @@ implicit none
     ! boolean=.TRUE.
     boolean=.FALSE.
 
+    densz=0.0
+    denspromz=0.0
+
     DO i=1,iter
         !inicializo los tiempos 
         t=0.0
@@ -175,6 +181,8 @@ implicit none
                 sumv(i,j,l)=sum(v(:,l)**2)/n
 
                END DO
+
+
                IF (j>1) THEN
                deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
                END IF
@@ -182,9 +190,9 @@ implicit none
               !obtener el número de particulas comprendidas en un intervalo.
 
                DO l=1,partz
-
+                ! Calculamos el número de particulas comprendidas en un intervalo
                 DO  m=1,n
-                    IF (r(m,2)<=(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
+                    IF (r(m,2)<(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
                             r(m,2)>=(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
                         densz(i,j,l)= (densz(i,j,l)+1.0)
                         ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
@@ -220,22 +228,22 @@ implicit none
 
         !PRINT*, "numero de colisiones en la iteración ",i ,":", colisiones(i)
     END DO
-
+    !Calculamos la temperatura promedio 
     DO l=1,rep
         DO m=1,2
         tmp(l,m)=sum(sumv(:,l,m))/iter
         ! tmp(l,m)=2*tmp(l,m)/(temp+tempz)
         END DO
     END DO 
-
+    ! Calcular la densidad promedio en tiempo y por el numero de fotografias del sistema
     DO l=1,partz
-
-        denspromz(l)=sum(densz(:,:,l))/(iter)  
-    
+        DO m=1,rep 
+            denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*rep)  
+ 
+        END DO 
     END DO 
-   
-    
-    
+
+    ! denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
 
     OPEN(9,FILE='temperaturas_' // trim(adjustl(alfa)) // '_' // trim(adjustl(eps)) // '.txt',STATUS='unknown')
     DO l=1,rep
@@ -266,7 +274,7 @@ implicit none
 
     OPEN(14,FILE='densz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
     DO l=1,partz
-        WRITE(14,*) denspromz(l)
+        WRITE(14,*) denspromz(l)    
     END DO
     CLOSE(14)
    
