@@ -34,7 +34,7 @@ implicit none
     INTEGER::rep,iter,n,iseed !numero de repeticiones que se realizan (tiempo) y numero de iteraciones  (numero de copias)
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::rab,vab !distancias y velocidades relativas
     INTEGER,DIMENSION(2)::ni !particulas que colisionan
-    INTEGER,ALLOCATABLE,DIMENSION(:)::colisiones !numero de colisiones
+    INTEGER,ALLOCATABLE,DIMENSION(:)::colisiones!numero de colisiones, tiempos de relajacion por repeticiones
     REAL(kind=8)::bij,qij,discr,t !bij=(ri-rj)*(vi-vj), discr es el discriminante de la solucion de segundo grado, t=tiempo de colision
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::tiempos,deltas !tiempos de colision
     REAL(kind=8), parameter :: pi = 4 * atan (1.0_8)
@@ -42,7 +42,7 @@ implicit none
     REAL(kind=4):: start, finish
     character(len=10)::alfa,eps
     INTEGER::partz !discretizacion en z para calcular la densidad
-
+    INTEGER:: tiempo_relajacion, control
     !notar que consideramos KT=1
     !inicializamos variables
     temp=1.0d00
@@ -53,17 +53,20 @@ implicit none
     
     sigma=1.0d00
     
-    ! H=1.5*sigma
-    H=1.9*sigma
+    H=1.5*sigma
+    ! H=1.3*sigma
+    ! H=1.9*sigma
     n=500
-    ! rho=0.06d00
+    rho=0.06d00
     ! rho=0.03d00
-    rho=0.2111d00
+    ! rho=0.2111d00
+
     
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
-    rep=550000
-    ! rep=30000000
+    ! rep=550000 !para 1.9*sigma
+    ! rep=7000000 ! para 1.3*sigma
+    rep=2000000!para 1.5*sigma
     iter=5
 
     ! alpha=0.95
@@ -73,9 +76,9 @@ implicit none
     vp=0.0d0
     
 
-    partz=8
+    partz=6
 
-
+    
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
     ALLOCATE(densz(iter,rep,partz),denspromz(partz))
 
@@ -89,7 +92,7 @@ implicit none
     write ( *, '(a,i8)' ) '  number of steps = ', rep
     write ( *, '(a,i8)' ) &
       '  The number of iterations taken  = ', iter
-      write ( *, '(a,i8)' ) '  N = ', n
+    write ( *, '(a,i8)' ) '  N = ', n
     write ( *, '(a,g14.6)' ) '  diameter (sigma) = ', sigma
     write ( *, '(a,g14.6)' ) '  density (rho) = ', rho
     write ( *, '(a,g14.6)' ) '  epsilon = ', epsilon
@@ -128,8 +131,12 @@ implicit none
 
     densz=0.0
     denspromz=0.0
+    tiempo_relajacion=0
 
     DO i=1,iter
+
+        control = 0
+
         !inicializo los tiempos 
         t=0.0
         deltas(1)=0.0
@@ -187,16 +194,33 @@ implicit none
                deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
                END IF
 
-              !obtener el número de particulas comprendidas en un intervalo.
-
+               
+               if (abs(sumv(i,j,1)-sumv(i,j,2))<=0.2 .AND. control==0 ) then
+                    
+                    tiempo_relajacion=tiempo_relajacion+nint(real(j)/real(iter))
+                    control=1
+                     print*, "tiempo", tiempo_relajacion
+                     
+                     print*, control
+                     
+                
+               end if 
+               
+                !obtener el número de particulas comprendidas en un intervalo.
+             
+               
                DO l=1,partz
                 ! Calculamos el número de particulas comprendidas en un intervalo
+                
                 DO  m=1,n
-                    IF (r(m,2)<(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
-                            r(m,2)>=(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
-                        densz(i,j,l)= (densz(i,j,l)+1.0)
-                        ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
-                    END IF
+                   
+                        IF (r(m,2)<(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
+                                r(m,2)>(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
+                            densz(i,j,l) = (densz(i,j,l)+1.0)
+                            ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
+                        END IF
+                    
+
                 END DO
     
               END DO 
@@ -236,10 +260,16 @@ implicit none
         END DO
     END DO 
     ! Calcular la densidad promedio en tiempo y por el numero de fotografias del sistema
+    ! DO l=1,partz
+    !     DO m=1,rep 
+    !         denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*rep)  
+    !     END DO 
+    ! END DO 
+
+
     DO l=1,partz
-        DO m=1,rep 
-            denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*rep)  
- 
+        DO m=tiempo_relajacion,rep 
+            denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*(rep-tiempo_relajacion))
         END DO 
     END DO 
 
