@@ -24,9 +24,10 @@ implicit none
     INTEGER:: i,j,k,l,m
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: r,v !vector con posiciones y velocidades
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:)::sumv ! suma de velocidades para cada colision
-    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:)::densz ! densidad a lo largo de z
+    ! REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:)::densz ! densidad a lo largo de z
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:)::densz ! densidad a lo largo de z
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: tmp !temperaturas en las dos direcciones del espacio
-    REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz !densidad promedio en z en el tiempo 
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz, stdevz !densidad promedio en z en el tiempo y su desviacion estandar 
     REAL(kind=8)::temp,tempz,H,longy,sigma,epsilon,rho !temperaturas en "y" y en "z", altura vertical y anchura, sigma==tamaño de la particula, rho=density
     REAL(kind=8)::alpha, vp  !! coeficiente de restitucion y velocidad que se introduce a traves de la pared 
     LOGICAL :: boolean,granular
@@ -42,7 +43,8 @@ implicit none
     REAL(kind=4):: start, finish
     character(len=10)::alfa,eps
     INTEGER::partz !discretizacion en z para calcular la densidad
-    INTEGER:: tiempo_relajacion, control
+    ! INTEGER:: tiempo_relajacion,
+    ! REAL(kind=4):: suma_particulas=0.0
     !notar que consideramos KT=1
     !inicializamos variables
     temp=1.0d00
@@ -58,15 +60,18 @@ implicit none
     ! H=1.9*sigma
     n=500
     rho=0.06d00
+    ! rho=0.1d00
     ! rho=0.03d00
     ! rho=0.2111d00
 
     
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
+    rep=50000000
     ! rep=550000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=2000000!para 1.5*sigma
+    ! rep=100000000!para 1.5*sigma
+    !factor 
     iter=5
 
     ! alpha=0.95
@@ -76,11 +81,11 @@ implicit none
     vp=0.0d0
     
 
-    partz=6
+    partz=8
 
     
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
-    ALLOCATE(densz(iter,rep,partz),denspromz(partz))
+    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz))
 
     write ( *, '(a)' ) ' '
     write ( *, '(a)' ) '            MD 2D SIMULATION                 '
@@ -89,7 +94,7 @@ implicit none
     write ( *, '(a)' ) ' '
     write ( *, '(a,g14.6)' ) '  Temperature y axis = ', temp
     write ( *, '(a,g14.6)' ) '  Temperature z axis = ', tempz
-    write ( *, '(a,i8)' ) '  number of steps = ', rep
+    write ( *, '(a,i10)' ) '  number of steps = ', rep
     write ( *, '(a,i8)' ) &
       '  The number of iterations taken  = ', iter
     write ( *, '(a,i8)' ) '  N = ', n
@@ -131,11 +136,12 @@ implicit none
 
     densz=0.0
     denspromz=0.0
-    tiempo_relajacion=0
+    stdevz=0.0
+    ! tiempo_relajacion=0
 
     DO i=1,iter
 
-        control = 0
+       
 
         !inicializo los tiempos 
         t=0.0
@@ -162,6 +168,11 @@ implicit none
             t=t+colt
             tiempos(j)=t
 
+ 
+
+           
+
+            ! avanzo las posiciones hasta el momento de colisión
             CALL evolve_positions()
         
 
@@ -170,7 +181,34 @@ implicit none
              
             CALL collide(ni(1),ni(2))
             colisiones(i)=colisiones(i)+1
+            
+            !medimos solo las densidades cuando colisionan particulas entre si
+            !medimos cuando el sistema esta en equilibrio térmico, bajo el criterio de que la diferencia entre temperaturas sea menor que 0.1
+            
+          
+            
+            if (abs(sum(v(:,2)**2)/n-sum(v(:,2)**2)/n)<=0.1  ) then
+                    
+
+                CALL medir_densidad(i)
+
+                ! DO l=1,partz
+                !     ! Calculamos el número de particulas comprendidas en un intervalo
+                !         DO  m=1,n
+                !                 IF (r(m,2)<(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
+                !                     r(m,2)>(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
+                !                         densz(i,l) = (densz(i,l)+1.0)
+                !                 ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
+                !                 END IF    
+                !         END DO
+                ! END DO 
+            end if 
+             
+
+            ! print*,'particulas que colisionan', ni(1),ni(2)
             END IF
+
+
 
             !colision entre particula a y muro
             IF (ni(2)>n) THEN
@@ -182,6 +220,8 @@ implicit none
             !colisiones(i)=colisiones(i)+1
             END IF
 
+           
+
             ! OBTENEMOS LOS VALORES DE LAS TEMPERATURA Y TIEMPO MEDIO ENTRE COLISIONES
                DO l=1,2
                 !    sumv(i,j,l)=0.5d00*sum(v(:,l)**2)/n
@@ -191,46 +231,43 @@ implicit none
 
 
                IF (j>1) THEN
-               deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
+                    deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
                END IF
 
                
-               if (abs(sumv(i,j,1)-sumv(i,j,2))<=0.2 .AND. control==0 ) then
-                    
-                    tiempo_relajacion=tiempo_relajacion+nint(real(j)/real(iter))
-                    control=1
-                     print*, "tiempo", tiempo_relajacion
-                     
-                     print*, control
-                     
-                
-               end if 
+               
+              
+             
                
                 !obtener el número de particulas comprendidas en un intervalo.
              
-               
-               DO l=1,partz
-                ! Calculamos el número de particulas comprendidas en un intervalo
+                ! DO m=1,n 
+                !     IF (r(m,2)>(sigma/2.0d0) .AND. &
+                !                r(m,2)<(H-sigma/2.0) ) THEN 
+                !        suma_particulas = (suma_particulas+1.0)
+                !        ! print*, 'suma particulas', suma_particulas
+                !        ! print*, 'particula', m
+                      
+                     
+                !    ELSE
+                !        print*, 'tiempo', j
+                !        ! print*, 'POSICION', r(m,2), 'PARTICULA', m
+                !        print*, 'posicion', r(m,2),'limite', (sigma/2.0d0),'particula', m
+                !        print*, 'posicion', r(m,2),'limite 2 ',(H-sigma/2.0d0)
+                       
+                !        ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
+                !    END IF   
+                !  END DO
                 
-                DO  m=1,n
-                   
-                        IF (r(m,2)<(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
-                                r(m,2)>(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
-                            densz(i,j,l) = (densz(i,j,l)+1.0)
-                            ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
-                        END IF
+
+            
                     
-
-                END DO
-    
-              END DO 
+                ! print*, sum(densz(i,j,:))
                
-
-
         END DO
 
 
-   
+        ! print*, suma_particulas/real(rep)
 
        
        
@@ -247,11 +284,13 @@ implicit none
             CLOSE(11)
        
 
-
-     
-
+        !promediamos por el numero total de colisiones 
+    
+        densz(i,:)=densz(i,:)/real(colisiones(i))
         !PRINT*, "numero de colisiones en la iteración ",i ,":", colisiones(i)
     END DO
+    
+    
     !Calculamos la temperatura promedio 
     DO l=1,rep
         DO m=1,2
@@ -259,21 +298,31 @@ implicit none
         ! tmp(l,m)=2*tmp(l,m)/(temp+tempz)
         END DO
     END DO 
-    ! Calcular la densidad promedio en tiempo y por el numero de fotografias del sistema
+    
+    
+
     ! DO l=1,partz
-    !     DO m=1,rep 
-    !         denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*rep)  
+    !     DO m=tiempo_relajacion,rep 
+    !         denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*(rep-tiempo_relajacion))
     !     END DO 
     ! END DO 
 
-
+! Calculamos la densidad promedio junto con la desviación estándar en el eje z
     DO l=1,partz
-        DO m=tiempo_relajacion,rep 
-            denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*(rep-tiempo_relajacion))
-        END DO 
+
+            denspromz(l)=denspromz(l)+sum(densz(:,l))/(iter)
+
+            stdevz(l)=sqrt(sum(densz(:,l)**2)/iter-denspromz(l)**2)
+
+            Print*,"standard deviation", stdevz(l)
+
     END DO 
 
-    ! denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
+
+! para determinar la densidad promedio y su desviación estándar en el eje z debemos finalmente dividir entre las secciones
+! en las que hemos dividido el sistema para medir. 
+    denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
+    stdevz(:)=stdevz(:)*real(partz)/(H-sigma)
 
     OPEN(9,FILE='temperaturas_' // trim(adjustl(alfa)) // '_' // trim(adjustl(eps)) // '.txt',STATUS='unknown')
     DO l=1,rep
@@ -305,6 +354,12 @@ implicit none
     OPEN(14,FILE='densz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
     DO l=1,partz
         WRITE(14,*) denspromz(l)    
+    END DO
+    CLOSE(14)
+
+    OPEN(14,FILE='stdevz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
+    DO l=1,partz
+        WRITE(14,*) stdevz(l)    
     END DO
     CLOSE(14)
    
@@ -369,7 +424,7 @@ implicit none
 
             factor = DOT_PRODUCT ( rij, vij )
             if(granular .EQV. .TRUE.) THEN 
-                vij    = -((1.0d0+alpha)*factor * rij)/(2.0d00)
+                vij    = -((1.0d0+alpha)*factor * rij)/(2.0d0)
             ELSE
                 vij    = -factor * rij
             END IF
@@ -428,14 +483,14 @@ implicit none
                 rab(1)=rab(1)-longy*ANINT(rab(1)/(longy)) ! condiciones periodicas
                 vab(:)=v(c,:)-v(n,:)   !calculamos velocidades relativas
                 bij    = DOT_PRODUCT ( rab, vab )   ! obtenemos el producto escalar (ri-rj)*(vi-vj)
-                IF (bij<0 ) THEN
+                IF (bij<0.0d0 ) THEN
                 discr=bij**2-(SUM(rab**2)-sigma**2)*SUM(vab**2)
-                IF( discr>0.0) THEN ! si colisiona con la sucesiva particula
+                IF( discr>0.0d0) THEN ! si colisiona con la sucesiva particula
                     tcol = ( -bij - SQRT ( discr ) ) / ( SUM ( vab**2 ) )
                     
                     !comprobar que los tiempos no son negativos
 
-                    IF (tcol<0) THEN 
+                    IF (tcol<0.0d0) THEN 
                         PRINT*, 'colisión:',c,' con',n,'. Tiempo',tcol
                     END IF  
                     
@@ -461,8 +516,8 @@ implicit none
 
 
 
-                IF (v(c,2)>0 ) THEN
-                    tcol=(H-sigma*0.5-r(c,2))/v(c,2)
+                IF (v(c,2)>0.0d0 ) THEN
+                    tcol=(H-sigma*0.5d0-r(c,2))/v(c,2)
 
                     !comprobar que los tiempos no son negativos
                     IF (tcol<0) THEN 
@@ -475,14 +530,14 @@ implicit none
                             ni(2)=n+1
                         END IF
                 END IF
-                IF (v(c,2)<0 ) THEN
+                IF (v(c,2)<0.0d0 ) THEN
                     IF(boolean .EQV. .TRUE.) THEN 
-                        tcol=(sigma*0.5-r(c,2))/(v(c,2)-vp)
+                        tcol=(sigma*0.5d0-r(c,2))/(v(c,2)-vp)
                     ELSE
-                        tcol=(sigma*0.5-r(c,2))/v(c,2)
+                        tcol=(sigma*0.5d0-r(c,2))/v(c,2)
                     END IF
                         !comprobar que los tiempos no son negativos
-                        IF (tcol<0 ) THEN 
+                        IF (tcol<0.0d0 ) THEN 
                             PRINT*, 'colisión:',k,' con pared. Tiempo',tcol
                         END IF 
 
@@ -526,6 +581,31 @@ implicit none
             END IF
         end subroutine wall_collide
 
+        subroutine medir_densidad(a)
+
+            IMPLICIT NONE
+            INTEGER :: w,y 
+            INTEGER:: a
+        
+
+            DO w=1,partz
+                ! Calculamos el número de particulas comprendidas en un intervalo
+                    DO  y=1,n
+                            IF (r(y,2)<(sigma/2.0d0+real(w)*(H-sigma)/real(partz)) .AND. &
+                                r(y,2)>(sigma/2.0d0+real(w-1)*(H-sigma)/real(partz))) THEN 
+                                    densz(a,w) = (densz(a,w)+1.0)
+                            ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
+                            END IF    
+                    END DO
+    
+                END DO 
+                
+
+              
+
+        end subroutine
+
+
         SUBROUTINE superpuesto() 
         LOGICAL::super
         INTEGER::q
@@ -547,6 +627,7 @@ implicit none
         END IF
 
         END SUBROUTINE superpuesto
+
 
 
 
