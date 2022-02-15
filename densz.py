@@ -21,20 +21,25 @@ import csv
 
 densz= pd.read_csv("densz_1.00.txt",names=['nz'])
 
+sdev= pd.read_csv("stdevz_1.00.txt",names=['sdev'])
+
 particion=len(densz)
 sigma=1.00
 n=sum(densz['nz'])
+tray=5
+# n=500
 # h=1.30
 h=1.50
 # h=1.90
 # rho=0.2111
 rho=0.06
+
 # rho=0.03
 l=n/(rho*(h-1.0))
 a= (n/l)
 b=np.sqrt(math.pi/a)*special.erfi(np.sqrt(a)*(h*0.50-0.50))
 
-
+print(n)
 
 z=np.linspace(0.5,(h-0.5),100)
 zmd=np.linspace(0.5+(h-1.0)/(2*particion),0.5+(h-1.0)*5/6+(h-1.0)/(2*particion),particion)
@@ -42,15 +47,18 @@ zmd=np.linspace(0.5+(h-1.0)/(2*particion),0.5+(h-1.0)*5/6+(h-1.0)/(2*particion),
 
 
 
-print(zmd)
+
 
 zmedia=(2*z-sigma)/(2*sigma)
 
 zmedia2=(2*zmd-sigma)/(2*sigma)
 
+### No hay que hacer esto si ya hemos dividido por la separacion relativa entre particiones para medir 
 
-densz=particion*densz/((h-1.0))
 
+# densz=particion*densz/((h-1.0))
+
+# sdev=particion*sdev/((h-1.0)*np.sqrt(tray))
 
 def elimina_ceros(original):
     nueva = []
@@ -63,11 +71,11 @@ def elimina_elemento(original,elemento):
     return original
 
 densz=elimina_ceros(densz['nz'])
+sdev=elimina_ceros(sdev['sdev'])
 # densz= elimina_elemento(densz,0)
 
 print(densz)
-
-print(sum(densz))
+print(zmd)
 
 
 
@@ -101,11 +109,15 @@ def profile_density_2(h,z,a,normalizacion):
 
 
 # PARA GUARDAR DOCS EN TXT POR COLUMNAS
-with open('densz_teo.txt', 'w') as f:
+with open('stdev_nz.txt', 'w') as f:
+    writer = csv.writer(f, delimiter='\t')
+    writer.writerows(zip( sdev,zmedia2))
+
+
+
+with open('dens_teo.txt', 'w') as f:
     writer = csv.writer(f, delimiter='\t')
     writer.writerows(zip( l*profile_density(h,n,z,l,a,b),zmedia))
-
-
 
 
 
@@ -114,14 +126,17 @@ with open('densz_teo.txt', 'w') as f:
 # tiemp=np.linspace(0.0,30050.0,len(temp))
 plt.plot(zmedia,l*profile_density(h,n,z,l,a,b),color='C0',label="$n_z$ ")
 # plt.plot(zmedia,profile_density_2(h,z,a,norma),color='C2',label="$n_z$ ")
-plt.plot(zmedia2,densz,color='C1',marker="o",linestyle="",label="$n_z$ (MD)")      
+
+plt.errorbar(zmedia2, densz, yerr=sdev, color='C1',marker="o",linestyle="",label="$n_z$ (MD)")    
+
+# plt.plot(zmedia2,densz,color='C1',marker="o",linestyle="",label="$n_z$ (MD)")      
 plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
 plt.xlabel ( r' $\overline{z}$ ', fontsize=30)
 plt.ylabel ( r' $n_2$ ',rotation=0.0,fontsize=30)
 plt.xticks(fontsize=20)
 plt.yticks(fontsize=20)
 
-plt.title ( r' \textbf {Perfil de densidad ($h=1.9\sigma$)}  ',fontsize=40)
+plt.title ( r' \textbf {Perfil de densidad ($h=1.5\sigma$)}  ',fontsize=40)
 
 
 
