@@ -27,6 +27,8 @@ implicit none
     ! REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:)::densz ! densidad a lo largo de z
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:)::densz ! densidad a lo largo de z
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: tmp !temperaturas en las dos direcciones del espacio
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:):: density !densidad para tiempo t en funcion de k
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: densityprom !densidad para tiempo t en funcion de k
     REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz, stdevz !densidad promedio en z en el tiempo y su desviacion estandar 
     REAL(kind=8)::temp,tempz,H,longy,sigma,epsilon,rho !temperaturas en "y" y en "z", altura vertical y anchura, sigma==tamaño de la particula, rho=density
     REAL(kind=8)::alpha, vp  !! coeficiente de restitucion y velocidad que se introduce a traves de la pared 
@@ -39,6 +41,7 @@ implicit none
     REAL(kind=8)::bij,qij,discr,t !bij=(ri-rj)*(vi-vj), discr es el discriminante de la solucion de segundo grado, t=tiempo de colision
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::tiempos,deltas !tiempos de colision
     REAL(kind=8), parameter :: pi = 4 * atan (1.0_8)
+    REAL(kind=8) :: num_onda
     !!! para deteminar el tiempo de cálculo
     REAL(kind=4):: start, finish
     character(len=10)::alfa,eps
@@ -59,33 +62,37 @@ implicit none
     ! H=1.3*sigma
     ! H=1.9*sigma
     n=500
-    rho=0.06d00
+    ! rho=0.06d00
+    rho=0.015d00
     ! rho=0.1d00
     ! rho=0.03d00
     ! rho=0.2111d00
 
+
     
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
-    rep=50000000
+    ! rep=50000000
     ! rep=550000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    ! rep=100000000!para 1.5*sigma
+    rep=1000000!para 1.5*sigma
     !factor 
     iter=5
 
-    ! alpha=0.95
-    alpha=1.0
+    alpha=0.95
+    ! alpha=1.0
     ! vp=0.001*temp
-    ! vp=0.0001
-    vp=0.0d0
+    vp=0.0001
+    ! vp=0.0d0
     
-
+!particiones en las que dividiel espacio en z para medir la densidad en el equilibrio 
     partz=8
+! Determinamos el numero de onda
 
+num_onda=pi/longy
     
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
-    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz))
+    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz),density(iter,rep,2),densityprom(rep,2))
 
     write ( *, '(a)' ) ' '
     write ( *, '(a)' ) '            MD 2D SIMULATION                 '
@@ -126,13 +133,13 @@ implicit none
     
     ! If granular eqv true, the particles lost energy on each collision (inelastic disks) 
     !else, the collision is elastic between particles 
-    ! granular=.TRUE.
-    granular=.FALSE.
+    granular=.TRUE.
+    ! granular=.FALSE.
     
     ! If boolean eqv false, the particle is confined between two rigid plates 
     !else, the lower plate is vibrating in a sawtooth way 
-    ! boolean=.TRUE.
-    boolean=.FALSE.
+    boolean=.TRUE.
+    ! boolean=.FALSE.
 
     densz=0.0
     denspromz=0.0
@@ -222,53 +229,34 @@ implicit none
 
            
 
-            ! OBTENEMOS LOS VALORES DE LAS TEMPERATURA Y TIEMPO MEDIO ENTRE COLISIONES
+            ! OBTENEMOS LOS VALORES DE LAS TEMPERATURA 
                DO l=1,2
                 !    sumv(i,j,l)=0.5d00*sum(v(:,l)**2)/n
                 sumv(i,j,l)=sum(v(:,l)**2)/n
-
                END DO
 
-
+               !Obtenemos el tiempo medio entre colisiones
                IF (j>1) THEN
                     deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
                END IF
 
-               
-               
+               !obtenemos las densidades para todo t en el eje horizontal. r(:,1) :eje y. r(:,2) :eje z.  
+                density(i,j,1)=sum(cos(num_onda*r(:,1)*j) )
+                density(i,j,2)=sum(sin(num_onda*r(:,1)*j) )
               
              
                
-                !obtener el número de particulas comprendidas en un intervalo.
-             
-                ! DO m=1,n 
-                !     IF (r(m,2)>(sigma/2.0d0) .AND. &
-                !                r(m,2)<(H-sigma/2.0) ) THEN 
-                !        suma_particulas = (suma_particulas+1.0)
-                !        ! print*, 'suma particulas', suma_particulas
-                !        ! print*, 'particula', m
-                      
-                     
-                !    ELSE
-                !        print*, 'tiempo', j
-                !        ! print*, 'POSICION', r(m,2), 'PARTICULA', m
-                !        print*, 'posicion', r(m,2),'limite', (sigma/2.0d0),'particula', m
-                !        print*, 'posicion', r(m,2),'limite 2 ',(H-sigma/2.0d0)
-                       
-                !        ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
-                !    END IF   
-                !  END DO
+         
                 
 
             
-                    
-                ! print*, sum(densz(i,j,:))
-               
+  
         END DO
 
 
-        ! print*, suma_particulas/real(rep)
-
+!!!promediamos por el numero total de colisiones!!!!!!!!!!!!!!!!!!!!!!!!! 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        densz(i,:)=densz(i,:)/real(colisiones(i))
        
        
         CALL superpuesto()
@@ -284,9 +272,6 @@ implicit none
             CLOSE(11)
        
 
-        !promediamos por el numero total de colisiones 
-    
-        densz(i,:)=densz(i,:)/real(colisiones(i))
         !PRINT*, "numero de colisiones en la iteración ",i ,":", colisiones(i)
     END DO
     
@@ -295,10 +280,20 @@ implicit none
     DO l=1,rep
         DO m=1,2
         tmp(l,m)=sum(sumv(:,l,m))/iter
+
         ! tmp(l,m)=2*tmp(l,m)/(temp+tempz)
         END DO
     END DO 
-    
+
+    ! Calculamos la densidad promedio para cada tiempo dado
+    DO l=1,rep
+        DO m=1,2
+        densityprom(l,m)=sum(density(l,:,m))/iter
+        
+        
+        ! tmp(l,m)=2*tmp(l,m)/(temp+tempz)
+        END DO
+    END DO
     
 
     ! DO l=1,partz
