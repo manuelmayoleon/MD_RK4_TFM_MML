@@ -241,8 +241,8 @@ num_onda=pi/longy
                END IF
 
                !obtenemos las densidades para todo t en el eje horizontal. r(:,1) :eje y. r(:,2) :eje z.  
-                density(i,j,1)=sum(cos(num_onda*r(:,1)*j) )
-                density(i,j,2)=sum(sin(num_onda*r(:,1)*j) )
+                density(i,j,1)=sum(cos(num_onda*r(:,1)) )
+                density(i,j,2)=sum(sin(num_onda*r(:,1)) )
               
              
                
