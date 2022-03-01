@@ -28,7 +28,7 @@ implicit none
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:)::densz ! densidad a lo largo de z
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: tmp !temperaturas en las dos direcciones del espacio
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:):: density !densidad para tiempo t en funcion de k
-    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: densityprom !densidad para tiempo t en funcion de k
+    REAL(kind=8),DIMENSION(2):: densityprom !densidad para tiempo t en funcion de k
     REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz, stdevz !densidad promedio en z en el tiempo y su desviacion estandar 
     REAL(kind=8)::temp,tempz,H,longy,sigma,epsilon,rho !temperaturas en "y" y en "z", altura vertical y anchura, sigma==tamaño de la particula, rho=density
     REAL(kind=8)::alpha, vp  !! coeficiente de restitucion y velocidad que se introduce a traves de la pared 
@@ -75,7 +75,7 @@ implicit none
     ! rep=50000000
     ! rep=550000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=1000000!para 1.5*sigma
+    rep=5000000!para 1.5*sigma
     !factor 
     iter=5
 
@@ -92,7 +92,7 @@ implicit none
 num_onda=pi/longy
     
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
-    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz),density(iter,rep,2),densityprom(rep,2))
+    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz),density(iter,rep,2))
 
     write ( *, '(a)' ) ' '
     write ( *, '(a)' ) '            MD 2D SIMULATION                 '
@@ -241,8 +241,10 @@ num_onda=pi/longy
                END IF
 
                !obtenemos las densidades para todo t en el eje horizontal. r(:,1) :eje y. r(:,2) :eje z.  
-                density(i,j,1)=sum(cos(num_onda*r(:,1)) )
-                density(i,j,2)=sum(sin(num_onda*r(:,1)) )
+               DO m=1,2 
+               density(i,j,m)=sum(cos(m*num_onda*r(:,1)) )
+               END DO 
+                ! density(i,j,2)=sum(sin(num_onda*r(:,1)) )
               
              
                
@@ -288,13 +290,14 @@ num_onda=pi/longy
     ! Calculamos la densidad promedio para cada tiempo dado
     DO l=1,rep
         DO m=1,2
-        densityprom(l,m)=sum(density(l,:,m))/iter
-        
-        
+        densityprom(m)= densityprom(m)+sum(density(:,l,m))/(iter*rep)
         ! tmp(l,m)=2*tmp(l,m)/(temp+tempz)
         END DO
     END DO
+
+    PRINT*, "Densidad promedio en el eje y para k=pi/L:", densityprom(1)
     
+    PRINT*, "Densidad promedio en el eje y para k=2*pi/L:", densityprom(2)
 
     ! DO l=1,partz
     !     DO m=tiempo_relajacion,rep 
@@ -325,6 +328,13 @@ num_onda=pi/longy
     END DO 
     CLOSE(9)   
 
+
+    ! OPEN(16,FILE='densidad_horizontal_' // trim(adjustl(alfa)) // '_' // trim(adjustl(eps)) // '.txt',STATUS='unknown')
+    ! DO l=1,rep
+    !     WRITE(16,*) densityprom(l,1), densityprom(l,2)
+    ! END DO 
+    ! CLOSE(16)   
+
         
 
     OPEN(10,FILE='pos_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')   
@@ -332,6 +342,8 @@ num_onda=pi/longy
          WRITE(10,*) r(l,1), r(l,2)
         END DO
     CLOSE(10) 
+
+
 
     
     OPEN(12,FILE='tiemposdecol_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown') 
@@ -348,9 +360,16 @@ num_onda=pi/longy
 
     OPEN(14,FILE='densz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
     DO l=1,partz
-        WRITE(14,*) denspromz(l)    
+        WRITE(14,*) denspromz(l)   
     END DO
     CLOSE(14)
+
+    OPEN(66,FILE='densitypromy_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
+    DO l=1,2
+        WRITE(66,*)   densityprom(l)
+    END DO
+    CLOSE(66)
+
 
     OPEN(14,FILE='stdevz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
     DO l=1,partz
