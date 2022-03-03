@@ -40,17 +40,22 @@ densy=319.60441969489989/l
 print(densy)
 # densy_teo=-0.6*(k**4*(0.3*x-y))**(1/3)
 
-# Estos son los desarrollos en serie de los los autovalores obtenidos 
+# Estos son los desarrollos en serie de los los autovalores obtenidos  en orden 2, o sea, con un error O(k^3)
 
-eigen1=(0.57735* (-1. + 1. *(np.sqrt(k**6)/k**3)**(2/3)) *k)/(np.sqrt(k**6)/k**3)**(1/3)-1/(np.sqrt(k**6)* (np.sqrt(k**6)/k**3)**(1/3))*0.333333 *(0.25* k**3* kapa + 1. *np.sqrt(k**6)* (np.sqrt(k**6)/k**3)**(1/3)
-    * kapa + 0.25* k**3* (np.sqrt(k**6)/k**3)**(2/3)* kapa - 0.75* k**3* mu 
-    -0.75 *k**3* (np.sqrt(k**6)/k**3)**(2/3) *mu) *k**2
+eigen1=-0.333333 *1.50* (kapa - mu) *k**2
 
 
+eigen2=((0.5 + 0.288675j)* ((0.866025 + 0.5j) + (0. + 1.0j))* k)-0.333333 *(0.75*(mu+kapa))*k**2
+
+
+eigen3=-((0.5 + 0.288675j)* ((0.866025 + 0.5j) + (0. + 1.0j))* k)-0.333333 *(0.75*(mu+kapa))*k**2
 
 
 print(eigen1)
 
+print(eigen2)
+
+print(eigen3)
 
 coef=np.arccos(densy)/(-1.10329e-9)
 
