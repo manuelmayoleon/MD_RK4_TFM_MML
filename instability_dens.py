@@ -19,6 +19,8 @@ from sympy import *
 # PARA USAR A LA HORA DE GUARDAR DOS COLUMNAS EN UN ARCHIVO
 import csv
 
+import cmath
+
 
 # density= pd.read_csv("densidad_horizontal_0.95_0.50.txt",header=None,sep='\s+', names=['re_n','im_n'])
 
@@ -37,7 +39,7 @@ l=n/(rho*(h-1.0))
 k=np.pi/l
 
 densy=319.60441969489989/l
-print(densy)
+# print(densy)
 # densy_teo=-0.6*(k**4*(0.3*x-y))**(1/3)
 
 # Estos son los desarrollos en serie de los los autovalores obtenidos  en orden 2, o sea, con un error O(k^3)
@@ -45,10 +47,11 @@ print(densy)
 eigen1=-0.333333 *1.50* (kapa - mu) *k**2
 
 
-eigen2=((0.5 + 0.288675j)* ((0.866025 + 0.5j) + (0. + 1.0j))* k)-0.333333 *(0.75*(mu+kapa))*k**2
+eigen2=( k*1j)-0.333333 *(0.75*(mu+kapa))*k**2
 
 
-eigen3=-((0.5 + 0.288675j)* ((0.866025 + 0.5j) + (0. + 1.0j))* k)-0.333333 *(0.75*(mu+kapa))*k**2
+eigen3=-( k*1j)-0.333333 *(0.75*(mu+kapa))*k**2
+
 
 
 print(eigen1)
@@ -59,7 +62,7 @@ print(eigen3)
 
 coef=np.arccos(densy)/(-1.10329e-9)
 
-print(coef)
+# print(coef)
 
 
 
@@ -81,4 +84,4 @@ print(coef)
 
 
 # plt.legend(loc=0,fontsize=30)
-plt.show()
+# plt.show()

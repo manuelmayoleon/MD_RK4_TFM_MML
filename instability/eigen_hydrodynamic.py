@@ -23,7 +23,7 @@ q=Symbol("q")
 ik=k*(1j)
 
 # M = np.matrix([[1, 0, 1], [2, -1, 3], [4, 3, 2]])
-M=np.matrix(( [0 ,-ik ,  0],[-ik*0.5 ,0, -ik*0.5  ],[-2*q -mu*(k**2) , -ik , -q - kapa*(k**2) ]  ))
+M=Matrix([ [0 ,-ik ,  0],[-ik*0.5 ,0, -ik*0.5  ],[-2*q -mu*(k**2) , -ik , -q - kapa*(k**2) ]  ])
 # print(M)
 # eigenval=la.eigvals(M)
 # print(eigenval)
@@ -39,18 +39,23 @@ x = Symbol('x')
 
 
 
-# p = M.charpoly(l)
+p = M.charpoly(x)
+
+print(p)
 # polynomial=- 0.5 * k**4*kapa + 0.5 * k**4*mu + 0.5* k**2*q -  k**2 *x - k**2 *kapa* x**2 -  q* x**2 - x**3
+# poli2=1.0*x**3 + (1.0*k**2*kapa + 1.0*q)*x**2 + 1.0*k**2*x + 0.5*k**4*kapa - 0.5*k**4*mu - 0.5*k**2*q
+
 polynomial=- 0.5 * k**4*kapa + 0.5 * k**4*mu  -  k**2 *x - k**2 *kapa* x**2 - x**3
+# poli2_noq=1.0*x**3 + (1.0*k**2*kapa )*x**2 + 1.0*k**2*x + 0.5*k**4*kapa - 0.5*k**4*mu 
 
 
 
 
-quadratic_equation = Eq(polynomial, 0)
+# quadratic_equation = Eq(polynomial, 0)
 
-solucion=solve(quadratic_equation, x)
+# solucion=solve(quadratic_equation, x)
 
-print(solucion[0])
+# print(solucion[0])
 
 # coeff = [- 0.5 * k**4*kapa + 0.5 * k**4*mu + 0.5* k**2*q , -  k**2,  - k**2 *kapa-  q, -1]
 
