@@ -21,10 +21,15 @@ import csv
 
 import cmath
 
+import functions
 
-# density= pd.read_csv("densidad_horizontal_0.95_0.50.txt",header=None,sep='\s+', names=['re_n','im_n'])
 
-# t= pd.read_csv("tiemposdecol_0.95.txt",header=None,sep='\s+', names=['t'])
+
+
+density= pd.read_csv("densitypromy_0.95.txt",header=None,sep='\s+', names=['2pi','4pi'])
+
+t= pd.read_csv("tiemposdecol_0.95.txt",header=None,sep='\s+', names=['t'])
+
 kapa= Symbol("kapa",positive=True)
 mu=Symbol("mu",positive=True)
 
@@ -36,7 +41,12 @@ n=500
 
 # rho=0.03
 l=n/(rho*(h-1.0))
-k=np.pi/l
+k=2*np.pi/l
+alfa=0.95
+epsilon=0.5
+
+
+print(k)
 
 densy=319.60441969489989/l
 # print(densy)
@@ -54,24 +64,21 @@ eigen3=-( k*1j)-0.333333 *(0.75*(mu+kapa))*k**2
 
 
 
-print(eigen1)
-
-print(eigen2)
-
-print(eigen3)
-
 coef=np.arccos(densy)/(-1.10329e-9)
 
 # print(coef)
+t=np.linspace(0,max(t['t']),1000)
 
+# print(functions.eigenvalue1(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),k))
 
+# densteo=np.exp(functions.eigenvalue1(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),k)*t)
 
 
     # return -4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
 # tiemp=np.linspace(0.0,30050.0,len(temp))
 
-# plt.plot(zmedia,profile_density_2(h,z,a,norma),color='C2',label="$n_z$ ")
-# plt.plot(t['t'],density['re_n'],color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
+# plt.plot(t,densteo,color='C2',label="$n_y$ ")
+# plt.plot(t['t'],density['2pi'],color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
  
 # plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
 # plt.xlabel ( r' $\overline{z}$ ', fontsize=30)
