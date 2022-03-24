@@ -46,7 +46,7 @@ alfa=0.95
 epsilon=0.5
 
 
-print(k)
+# print(k)
 
 densy=319.60441969489989/l
 # print(densy)
@@ -67,7 +67,16 @@ eigen3=-( k*1j)-0.333333 *(0.75*(mu+kapa))*k**2
 coef=np.arccos(densy)/(-1.10329e-9)
 
 # print(coef)
-t=np.linspace(0,max(t['t']),1000)
+# t=np.linspace(0,max(t['t']),1000)
+
+kk=np.linspace(0.0,1.0,100)
+# x=Symbol("x")
+
+print( np,sqrt((-4.5 *k**4 *functions.Panel(1).kapa(alfa) - 2.* k**6* functions.Panel(1).kapa(alfa)**3 + 13.5* k**4* functions.Panel(1).mu(alfa) +22.5* k**2*functions.lamda1(alfa,epsilon) - 6.* k**4* functions.Panel(1).kapa(alfa)**2*functions.lamda1(alfa,epsilon)- 6.* k**2 *functions.Panel(1).kapa(alfa)* functions.lamda1(alfa,epsilon)**2 - 2. *functions.lamda1(alfa,epsilon)**3)**2 + 
+                4* (3.* k**2 - (1.* k**2* functions.Panel(1).kapa(alfa) + 1.* functions.lamda1(alfa,epsilon))**2)**3+0j))
+# print(1j*np.sqrt(abs((-4.5 *k**4* functions.Panel(1).kapa(alfa) - 2.* k**6* functions.Panel(1).kapa(alfa)**3 + 13.5* k**4* functions.Panel(1).mu(alfa) + 
+#                 22.5* k**2* functions.lamda1(alfa,epsilon) - 6. *k**4* functions.Panel(1).kapa(alfa)**2* functions.lamda1(alfa,epsilon) - 6. *k**2* functions.Panel(1).kapa(alfa)* functions.lamda1(alfa,epsilon)**2 - 2. *functions.lamda1(alfa,epsilon)**3)**2 + 
+#                 4 *(3.* k**2 - (1.* k**2* functions.Panel(1).kapa(alfa) + 1.* functions.lamda1(alfa,epsilon))**2)**3)))
 
 # print(functions.eigenvalue1(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),k))
 
@@ -79,16 +88,22 @@ t=np.linspace(0,max(t['t']),1000)
 
 # plt.plot(t,densteo,color='C2',label="$n_y$ ")
 # plt.plot(t['t'],density['2pi'],color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
- 
-# plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
+# print((functions.eigenvalue3(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),kk)).real)
+
+plt.plot(kk,functions.eigenvalue1(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),kk),color='C2',label="$\lambda_1$ ")
+plt.plot(kk,np.real(functions.eigenvalue2(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),kk)),color='C4',label="$\lambda_2$ ")
+plt.plot(kk,np.real(functions.eigenvalue3(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),kk)),color='C3',label="$\lambda_3$ ")
+plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
+plt.xlabel ( r' $k$ ', fontsize=30)
+plt.ylabel ( r' $\lambda$ ',rotation=0.0,fontsize=30)
 # plt.xlabel ( r' $\overline{z}$ ', fontsize=30)
 # plt.ylabel ( r' $n_2$ ',rotation=0.0,fontsize=30)
-# plt.xticks(fontsize=20)
-# plt.yticks(fontsize=20)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
 
-# plt.title ( r' \textbf {Perfil de densidad ($h=1.5\sigma$)}  ',fontsize=40)
+plt.title ( r' \textbf {Autovalores en función de k }  ',fontsize=40)
 
 
 
-# plt.legend(loc=0,fontsize=30)
-# plt.show()
+plt.legend(loc=0,fontsize=30)
+plt.show()
