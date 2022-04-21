@@ -28,11 +28,11 @@ implicit none
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:)::densz ! densidad a lo largo de z
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: tmp !temperaturas en las dos direcciones del espacio
     REAL(kind=8),ALLOCATABLE,DIMENSION(:,:,:):: density !densidad para tiempo t en funcion de k
-    REAL(kind=8),DIMENSION(2):: densityprom !densidad para tiempo t en funcion de k
+    REAL(kind=8),ALLOCATABLE,DIMENSION(:,:):: densityprom !densidad para tiempo t en funcion de k
     REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz, stdevz !densidad promedio en z en el tiempo y su desviacion estandar 
     REAL(kind=8)::temp,tempz,H,longy,sigma,epsilon,rho !temperaturas en "y" y en "z", altura vertical y anchura, sigma==tamaño de la particula, rho=density
     REAL(kind=8)::alpha, vp  !! coeficiente de restitucion y velocidad que se introduce a traves de la pared 
-    LOGICAL :: boolean,granular
+    LOGICAL :: boolean,granular,densz_bool
     REAL(kind=8)::tcol,colt !tiempo de colision, tiempo para comparar y tiempo inicial
     INTEGER::rep,iter,n,iseed !numero de repeticiones que se realizan (tiempo) y numero de iteraciones  (numero de copias)
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::rab,vab !distancias y velocidades relativas
@@ -75,9 +75,9 @@ implicit none
     ! rep=50000000
     ! rep=550000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=5000000!para 1.5*sigma
+    rep=22000000!para 1.5*sigma
     !factor 
-    iter=5
+    iter=1
 
     alpha=0.95
     ! alpha=1.0
@@ -89,10 +89,10 @@ implicit none
     partz=8
 ! Determinamos el numero de onda
 
-num_onda=pi/longy
+num_onda=2*pi/longy
     
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
-    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz),density(iter,rep,2))
+    ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz),density(iter,rep,2),densityprom (rep,2))
 
     write ( *, '(a)' ) ' '
     write ( *, '(a)' ) '            MD 2D SIMULATION                 '
@@ -129,7 +129,7 @@ num_onda=pi/longy
     colisiones(:)=0.d00
     !inicializo el tiempo para calcular el tiempo de computo
     call cpu_time(start)
-    !Abro los archivos en los que voy a gaurdar los valores de las temperaturas, velocidades, posiciones, etc...
+    !Abro los archivos en los que voy a guardar los valores de las temperaturas, velocidades, posiciones, etc...
     
     ! If granular eqv true, the particles lost energy on each collision (inelastic disks) 
     !else, the collision is elastic between particles 
@@ -141,9 +141,16 @@ num_onda=pi/longy
     boolean=.TRUE.
     ! boolean=.FALSE.
 
+
+    ! If densz_bool eqv false, the density is not calculated
+    !else, the density is calculated
+    densz_bool=.TRUE.
+    ! densz_bool=.FALSE.
     densz=0.0
     denspromz=0.0
     stdevz=0.0
+    density=0
+    densityprom=0
     ! tiempo_relajacion=0
 
     DO i=1,iter
@@ -176,7 +183,12 @@ num_onda=pi/longy
             tiempos(j)=t
 
  
-
+                 !obtenemos las densidades para todo t en el eje horizontal. r(:,1) :eje y. r(:,2) :eje z.  
+               
+            density(i,j,1)=sum(cos(num_onda*r(:,1)) )
+            density(i,j,2)=sum(sin(num_onda*r(:,1)) )
+    
+        ! density(i,j,2)=sum(sin(num_onda*r(:,1)) )
            
 
             ! avanzo las posiciones hasta el momento de colisión
@@ -193,24 +205,13 @@ num_onda=pi/longy
             !medimos cuando el sistema esta en equilibrio térmico, bajo el criterio de que la diferencia entre temperaturas sea menor que 0.1
             
           
-            
-            if (abs(sum(v(:,2)**2)/n-sum(v(:,2)**2)/n)<=0.1  ) then
+            IF (densz_bool .EQV. .TRUE.) THEN 
+                if (abs(sum(v(:,2)**2)/n-sum(v(:,2)**2)/n)<=0.1  ) then
                     
+                    CALL medir_densidad(i)
 
-                CALL medir_densidad(i)
-
-                ! DO l=1,partz
-                !     ! Calculamos el número de particulas comprendidas en un intervalo
-                !         DO  m=1,n
-                !                 IF (r(m,2)<(sigma/2.0d0+real(l)*(H-sigma)/real(partz)) .AND. &
-                !                     r(m,2)>(sigma/2.0d0+real(l-1)*(H-sigma)/real(partz))) THEN 
-                !                         densz(i,l) = (densz(i,l)+1.0)
-                !                 ! print*, 'densz', densz(i,j,l), 'para ', l, 'iteracion', j
-                !                 END IF    
-                !         END DO
-                ! END DO 
-            end if 
-             
+                end if 
+            END IF
 
             ! print*,'particulas que colisionan', ni(1),ni(2)
             END IF
@@ -240,11 +241,7 @@ num_onda=pi/longy
                     deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
                END IF
 
-               !obtenemos las densidades para todo t en el eje horizontal. r(:,1) :eje y. r(:,2) :eje z.  
-               DO m=1,2 
-               density(i,j,m)=sum(cos(m*num_onda*r(:,1)) )
-               END DO 
-                ! density(i,j,2)=sum(sin(num_onda*r(:,1)) )
+          
               
              
                
@@ -290,37 +287,36 @@ num_onda=pi/longy
     ! Calculamos la densidad promedio para cada tiempo dado
     DO l=1,rep
         DO m=1,2
-        densityprom(m)= densityprom(m)+sum(density(:,l,m))/(iter*rep)
+        densityprom(l,m)= sum(density(:,l,m))/iter
         ! tmp(l,m)=2*tmp(l,m)/(temp+tempz)
         END DO
-    END DO
+    END DO  
 
-    PRINT*, "Densidad promedio en el eje y para k=pi/L:", densityprom(1)
-    
-    PRINT*, "Densidad promedio en el eje y para k=2*pi/L:", densityprom(2)
 
     ! DO l=1,partz
     !     DO m=tiempo_relajacion,rep 
     !         denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*(rep-tiempo_relajacion))
     !     END DO 
     ! END DO 
+IF (densz_bool .EQV. .TRUE.) THEN 
+    call calc_densz_prom(iter,partz)
+END IF
+! ! Calculamos la densidad promedio junto con la desviación estándar en el eje z
+!     DO l=1,partz
 
-! Calculamos la densidad promedio junto con la desviación estándar en el eje z
-    DO l=1,partz
+!             denspromz(l)=denspromz(l)+sum(densz(:,l))/(iter)
 
-            denspromz(l)=denspromz(l)+sum(densz(:,l))/(iter)
+!             stdevz(l)=sqrt(sum(densz(:,l)**2)/iter-denspromz(l)**2)
 
-            stdevz(l)=sqrt(sum(densz(:,l)**2)/iter-denspromz(l)**2)
+!             Print*,"standard deviation", stdevz(l)
 
-            Print*,"standard deviation", stdevz(l)
-
-    END DO 
+!     END DO 
 
 
-! para determinar la densidad promedio y su desviación estándar en el eje z debemos finalmente dividir entre las secciones
-! en las que hemos dividido el sistema para medir. 
-    denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
-    stdevz(:)=stdevz(:)*real(partz)/(H-sigma)
+! ! para determinar la densidad promedio y su desviación estándar en el eje z debemos finalmente dividir entre las secciones
+! ! en las que hemos dividido el sistema para medir. 
+!     denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
+!     stdevz(:)=stdevz(:)*real(partz)/(H-sigma)
 
     OPEN(9,FILE='temperaturas_' // trim(adjustl(alfa)) // '_' // trim(adjustl(eps)) // '.txt',STATUS='unknown')
     DO l=1,rep
@@ -358,24 +354,16 @@ num_onda=pi/longy
     END DO
     CLOSE(13)
 
-    OPEN(14,FILE='densz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
-    DO l=1,partz
-        WRITE(14,*) denspromz(l)   
-    END DO
-    CLOSE(14)
+
 
     OPEN(66,FILE='densitypromy_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
-    DO l=1,2
-        WRITE(66,*)   densityprom(l)
+    DO l=1,rep
+        WRITE(66,*)   densityprom(l,1), densityprom(l,2) 
     END DO
     CLOSE(66)
 
 
-    OPEN(14,FILE='stdevz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
-    DO l=1,partz
-        WRITE(14,*) stdevz(l)    
-    END DO
-    CLOSE(14)
+ 
    
     call save_data_file()
  
@@ -642,7 +630,37 @@ num_onda=pi/longy
 
         END SUBROUTINE superpuesto
 
+        subroutine calc_densz_prom(iteraciones,particion)
 
+            IMPLICIT NONE
+            INTEGER :: l,particion,iteraciones
+
+            DO l=1,particion
+
+                denspromz(l)=denspromz(l)+sum(densz(:,l))/(iteraciones)
+    
+                stdevz(l)=sqrt(sum(densz(:,l)**2)/iteraciones-denspromz(l)**2)
+    
+                Print*,"standard deviation", stdevz(l)
+    
+            END DO 
+            ! para determinar la densidad promedio y su desviación estándar en el eje z debemos finalmente dividir entre las secciones
+            ! en las que hemos dividido el sistema para medir. 
+            denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
+            stdevz(:)=stdevz(:)*real(partz)/(H-sigma)
+
+            OPEN(14,FILE='densz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
+            DO l=1,particion
+                WRITE(14,*) denspromz(l)   
+            END DO
+            CLOSE(14)
+            OPEN(14,FILE='stdevz_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
+            DO l=1,partz
+                WRITE(14,*) stdevz(l)    
+            END DO
+            CLOSE(14)
+
+        end subroutine calc_densz_prom
 
 
 END PROGRAM final_version
