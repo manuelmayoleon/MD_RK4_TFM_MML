@@ -1,0 +1,7 @@
+Para k=2pi/L, rho=0.0015
+
+coefficient of determination: 0.941571673647557
+intercept: 0.01865910311721941
+slope: [0.00012949]
+ 
+Theoretical slope (0.05 Factor)= 0.00012517159449285117
