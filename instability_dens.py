@@ -36,7 +36,8 @@ h=1.50
 sigma=1.0
 # h=1.90
 # rho=0.2111
-rho=0.015
+# rho=0.015
+rho=0.03
 n=500
 
 # rho=0.03
@@ -86,12 +87,23 @@ kk=np.linspace(0.0,0.6,1000)
 # print(functions.Panel(1).mu(alfa))
 # print(functions.Panel(1).kapa(alfa))
 # print(functions.lamda1(alfa,epsilon))
+min_index = np.argmin(density['re'])
+max_index = np.argmax(density['re']) 
+print(min_index) 
+print(max_index) 
+
 
 density=density['re']+1j*density['im']
 denslog=np.log(density)
 x=t['t']
 
-reg = LinearRegression().fit(x.values.reshape((-1, 1)),np.real( denslog))
+denslog=denslog[min_index:max_index]
+x=x[min_index :max_index]
+density=density[min_index :max_index]
+# print(len(x))
+# print(len(density))
+# print(len(x.values.reshape((-1, 1))))
+reg = LinearRegression().fit(x.values.reshape((-1, 1)),np.real(denslog))
 r_sq = reg.score(x.values.reshape((-1, 1)), np.real( denslog))
 print('coefficient of determination:', r_sq)
 print('intercept:', reg.intercept_)
@@ -100,11 +112,13 @@ linear_reg=reg.coef_*x+reg.intercept_
     # return -4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
 # tiemp=np.linspace(0.0,100.0,len(t['t']))
 densteo=np.exp(functions.eigenvalue1(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),k)*tt*dens/20)
+print('Theoretical slope:', functions.eigenvalue1(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),k)*dens/20)
+
 # expdens= np.exp(0.16*tt)
 # print(functions.eigenvalue2(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),k))
 # plt.plot(tt,densteo,color='C2',label="$n_y$ ")
-# plt.plot(t['t'],density,color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
-plt.plot(t['t'],denslog,color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
+# plt.plot(x,density,color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
+plt.plot(x,denslog,color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
 plt.plot(x,linear_reg,color='C2',label="$n_{\frac{\pi}{L}}$ (MD)")   
 # print((functions.eigenvalue3(functions.Panel(1).mu(alfa),functions.Panel(1).kapa(alfa),functions.lamda1(alfa,epsilon),kk)).real)
 # plt.plot(tt,expdens,color='C2',label="$n_y \;(k=2\pi/L)$ ")
