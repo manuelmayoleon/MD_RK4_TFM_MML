@@ -5,7 +5,7 @@ PROGRAM final_version
     !!  Calculo de colisiones en 2d con condiciones periodicas      !!
     !!                                                              !!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !*****************************************************************************80
+    !*****************************************************************************
   !  Modified:
   !
   !    19 Jule 2021
@@ -14,7 +14,8 @@ PROGRAM final_version
   !
   !    Manuel Mayo León 
   !
-
+!?? Cosas en azul
+!** Cosas en verde
 
 
 implicit none
@@ -63,9 +64,9 @@ implicit none
     ! H=1.9*sigma
     n=500
     ! rho=0.06d00
-    rho=0.015d00
+    ! rho=0.015d00
     ! rho=0.1d00
-    ! rho=0.03d00
+    rho=0.03d00
     ! rho=0.2111d00
 
 
@@ -85,7 +86,7 @@ implicit none
     vp=0.0001
     ! vp=0.0d0
     
-!particiones en las que dividiel espacio en z para medir la densidad en el equilibrio 
+!!particiones en las que divido el espacio en z para medir la densidad en el equilibrio 
     partz=8
 ! Determinamos el numero de onda
 
@@ -188,7 +189,7 @@ num_onda=2*pi/longy
             density(i,j,1)=sum(cos(num_onda*r(:,1)) )
             density(i,j,2)=sum(sin(num_onda*r(:,1)) )
     
-        ! density(i,j,2)=sum(sin(num_onda*r(:,1)) )
+         ! density(i,j,2)=sum(sin(num_onda*r(:,1)) )
            
 
             ! avanzo las posiciones hasta el momento de colisión
@@ -237,11 +238,21 @@ num_onda=2*pi/longy
                END DO
 
                !Obtenemos el tiempo medio entre colisiones
-               IF (j>1) THEN
-                    deltas(j)=(0.06*sigma*epsilon*(sumv(i,j,1)-sumv(i,1,1))*(tiempos(j)))/(sqrt(pi*sumv(i,j,1)))
-               END IF
+                IF (j==1) THEN
+                   
+                   deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(SQRT(sumv(i,j,1))*tiempos(j))
+                
+                
+                ELSE  
+                    
+                    deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(tiempos(j)-tiempos(j-1))*SQRT(sumv(i,j,1))
 
-          
+                    ! DO l=1,j-1
+                    !     deltas(j)=deltas(j)+deltas(l)
+                    ! END DO 
+                END IF
+
+                    
               
              
                
@@ -253,8 +264,8 @@ num_onda=2*pi/longy
         END DO
 
 
-!!!promediamos por el numero total de colisiones!!!!!!!!!!!!!!!!!!!!!!!!! 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        !!!promediamos por el numero total de colisiones!!!!!!!!!!!!!!!!!!!!!!!!! 
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         densz(i,:)=densz(i,:)/real(colisiones(i))
        
        
@@ -263,12 +274,12 @@ num_onda=2*pi/longy
 
         ! Guardamos los valores de las velocidades para todas las trayectorias de forma consecutiva. Asi aumentamos la estadística
 
-        OPEN(11,FILE='velocidad_' // trim(adjustl(alfa)) // '.txt',  FORM ='FORMATTED',STATUS='UNKNOWN',POSITION='APPEND'&
-        ,ACTION='READWRITE')   
-                DO l=1,n
-                    WRITE(11,*) v(l,1), v(l,2)
-                END DO
-            CLOSE(11)
+        ! OPEN(11,FILE='velocidad_' // trim(adjustl(alfa)) // '.txt',  FORM ='FORMATTED',STATUS='UNKNOWN',POSITION='APPEND'&
+        ! ,ACTION='READWRITE')   
+        !         DO l=1,n
+        !             WRITE(11,*) v(l,1), v(l,2)
+        !         END DO
+        !     CLOSE(11)
        
 
         !PRINT*, "numero de colisiones en la iteración ",i ,":", colisiones(i)
@@ -404,7 +415,7 @@ END IF
             ,ACTION='READWRITE')
     
             write(35,* ) 'N', n, 'T_y', temp, 'T_z', tempz, 'epsilon', epsilon,  ' alpha    '&
-            , alpha, ' vp ', vp  , ' rho ', rho 
+            , alpha, ' vp ', vp  , ' rho ', rho , ' colisiones p.p. ', colisiones(iter)/n , ' tiempo ', rep
             write(35,* ) ' '
           
         end subroutine save_data_file
