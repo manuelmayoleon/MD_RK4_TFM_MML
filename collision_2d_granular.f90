@@ -76,11 +76,11 @@ implicit none
     ! rep=50000000
     ! rep=550000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=22000000!para 1.5*sigma
+    rep=15000000!para 1.5*sigma
     !factor 
     iter=1
 
-    alpha=0.95
+    alpha=0.90
     ! alpha=1.0
     ! vp=0.001*temp
     vp=0.0001
@@ -238,19 +238,19 @@ num_onda=2*pi/longy
                END DO
 
                !Obtenemos el tiempo medio entre colisiones
-                IF (j==1) THEN
+                ! IF (j==1) THEN
                    
-                   deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(SQRT(sumv(i,j,1))*tiempos(j))
+                !    deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(SQRT(sumv(i,j,1))*tiempos(j))
                 
                 
-                ELSE  
+                ! ELSE  
                     
-                    deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(tiempos(j)-tiempos(j-1))*SQRT(sumv(i,j,1))
+                !     deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(tiempos(j)-tiempos(j-1))*SQRT(sumv(i,j,1))
 
-                    ! DO l=1,j-1
-                    !     deltas(j)=deltas(j)+deltas(l)
-                    ! END DO 
-                END IF
+                !     ! DO l=1,j-1
+                !     !     deltas(j)=deltas(j)+deltas(l)
+                !     ! END DO 
+                ! END IF
 
                     
               
@@ -359,11 +359,11 @@ END IF
     END DO
     CLOSE(12) 
     
-    OPEN(13,FILE='sparam_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
-    DO l=1,rep
-        WRITE(13,*) deltas(l)
-    END DO
-    CLOSE(13)
+    ! OPEN(13,FILE='sparam_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
+    ! DO l=1,rep
+    !     WRITE(13,*) deltas(l)
+    ! END DO
+    ! CLOSE(13)
 
 
 

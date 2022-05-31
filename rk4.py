@@ -8,9 +8,12 @@ from matplotlib.transforms import (
     Bbox, TransformedBbox, blended_transform_factory)
 
 
-temp= pd.read_csv("temperaturas_1.00_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
-tiempo= pd.read_csv("tiemposdecol_1.00.txt",names=["t"])
-
+temp= pd.read_csv("temperaturas_0.90_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
+tiempo= pd.read_csv("tiemposdecol_0.90.txt",names=["t"])
+# datos= pd.read_csv("data.txt")
+ 
+# print(datos)                   
+                    
 x0=1.0
 y0=5.0
 a=0
@@ -18,27 +21,32 @@ b=int(tiempo["t"][len(tiempo)-1])
 # b=30050
 h=0.2
 
+alfa=0.90
+epsilon=0.5
+rho=0.03
+vp=0.0001
+
 # print(temp)
 # print(tiempo)
 
+class Panel:
+    def __init__(self,alfa=0.95,epsilon= 0.5,rho=0.03 ,vp=0.0001):
+        self.rho = rho
+        self.vp=  vp
+        self.epsilon = epsilon 
+        self.alfa = alfa
+        
+    def f(self,t1,t2,t):
+        
+        # return np.sqrt(np.pi)*(1+alfa)*epsilon*rho*np.sqrt(t1)*( -(1-alfa)*t1+epsilon**2.0*(-(5*alfa-1)*t1 +(3*alfa+1)*t2 )/12)
+        return 2.0*(1+self.alfa)*self.epsilon*self.rho*np.sqrt(t1)*( -(1-self.alfa)*t1+self.epsilon**2.0*(-4.0*self.alfa*t1 +(3.0*self.alfa+1.0)*t2 )/12)/np.sqrt(np.pi)
+        # return 4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
 
-def f(t1,t2,t):
-    alfa=1.0
-    epsilon=0.5
-    rho=0.06
-    # return np.sqrt(np.pi)*(1+alfa)*epsilon*rho*np.sqrt(t1)*( -(1-alfa)*t1+epsilon**2.0*(-(5*alfa-1)*t1 +(3*alfa+1)*t2 )/12)
-    return 2.0*(1+alfa)*epsilon*rho*np.sqrt(t1)*( -(1-alfa)*t1+epsilon**2.0*(-4.0*alfa*t1 +(3.0*alfa+1.0)*t2 )/12)/np.sqrt(np.pi)
-    # return 4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
-
-def g(t1,t2,t):
-    alfa=1.0
-    epsilon=0.5
-    rho=0.06
-    # vp=0.0001
-    vp=0.0
-    # return   2.0*np.sqrt(np.pi)*(1+alfa)*epsilon**3.0*rho*np.sqrt(t1)*( 0.5*(1+alfa)*t1-t2)/3.0 +2.0*vp*t2/epsilon
-    return   2.0*(1+alfa)*epsilon**3.0*rho*np.sqrt(t1)*( 0.5*(1+alfa)*t1-t2)/(3.0*np.sqrt(np.pi)) +2.0*vp*t2/epsilon
-    
+    def g(self,t1,t2,t):
+       
+        # return   2.0*np.sqrt(np.pi)*(1+alfa)*epsilon**3.0*rho*np.sqrt(t1)*( 0.5*(1+alfa)*t1-t2)/3.0 +2.0*vp*t2/epsilon
+        return   2.0*(1+self.alfa)*self.epsilon**3.0*self.rho*np.sqrt(t1)*( 0.5*(1+self.alfa)*t1-t2)/(3.0*np.sqrt(np.pi)) +2.0*self.vp*t2/self.epsilon
+        
     # return -4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
 # tiemp=np.linspace(0.0,30050.0,len(temp))
 plt.plot(tiempo["t"],temp["z"],color='C0',label="$T_z$ (MD)")
@@ -76,4 +84,4 @@ def runge_kutta_system(f, g, x0, y0, a, b, h):
     plt.legend(loc=0,fontsize=30)
     plt.show()
 # np.seterr('raise')
-runge_kutta_system(f,g,x0,y0,a,b,h)
+runge_kutta_system(Panel(alfa,epsilon,rho,vp).f,Panel(alfa,epsilon,rho,vp).g,x0,y0,a,b,h)
