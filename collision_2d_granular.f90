@@ -74,13 +74,15 @@ implicit none
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
     ! rep=50000000
-    ! rep=550000 !para 1.9*sigma
+    ! rep=5500000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=15000000!para 1.5*sigma
-    !factor 
+    ! rep=10000000!para 1.5*sigma
+    rep=8000000!para 1.5*sigma
+    
+    !!factor 
     iter=1
 
-    alpha=0.90
+    alpha=0.75
     ! alpha=1.0
     ! vp=0.001*temp
     vp=0.0001
@@ -499,8 +501,12 @@ END IF
                 IF (bij<0.0d0 ) THEN
                 discr=bij**2-(SUM(rab**2)-sigma**2)*SUM(vab**2)
                 IF( discr>0.0d0) THEN ! si colisiona con la sucesiva particula
-                    tcol = ( -bij - SQRT ( discr ) ) / ( SUM ( vab**2 ) )
-                    
+                    ! tcol = ( -bij - SQRT ( discr ) ) / ( SUM ( vab**2 ) )
+                     !! ALTERNATIVE WAY 
+                        
+                        qij=-(bij+sign(1.0d00,bij)*dsqrt(discr))    
+                        !  
+                        tcol=MIN(qij/abs(dsqrt(sum(vab**2))),(sum(rab**2)-sigma**2)/qij )
                     !comprobar que los tiempos no son negativos
 
                     IF (tcol<0.0d0) THEN 
