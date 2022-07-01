@@ -42,7 +42,7 @@ implicit none
     REAL(kind=8)::bij,qij,discr,t !bij=(ri-rj)*(vi-vj), discr es el discriminante de la solucion de segundo grado, t=tiempo de colision
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::tiempos,deltas !tiempos de colision
     REAL(kind=8), parameter :: pi = 4 * atan (1.0_8)
-    REAL(kind=8) :: num_onda
+    REAL(kind=8) :: num_onda,ts,gamma,lin_dens
     !!! para deteminar el tiempo de cálculo
     REAL(kind=4):: start, finish
     character(len=10)::alfa,eps
@@ -51,12 +51,8 @@ implicit none
     ! REAL(kind=4):: suma_particulas=0.0
     !notar que consideramos KT=1
     !inicializamos variables
-    temp=1.0d00
-    ! tempz=0.d001*temp
-    tempz=5.0*temp
-    ! temp=1.d00
-    ! tempz=5.d00
-    
+
+       
     sigma=1.0d00
     
     H=1.5*sigma
@@ -68,32 +64,51 @@ implicit none
     ! rho=0.1d00
     rho=0.03d00
     ! rho=0.2111d00
+    ! alpha=0.70
+    alpha=0.990
+    ! vp=0.001*temp
+    vp=0.0001
+    ! vp=0.0d0
 
 
-    
     epsilon=(H-sigma)/sigma
     longy=REAL(n,8)/(rho*(H-sigma))
+    lin_dens= rho*(H-sigma)
+
+    num_onda=2*pi/longy
+    
+
+
+!! calculo temperatura estacionaria teórica
+    gamma=(4.00*alpha*epsilon**2.00+12.00*(1.00-alpha))/((1+3.00*alpha)*epsilon**2.00)
+    ts=((3.00*Sqrt(pi)*gamma)/((1.00+alpha)*(gamma-(1.00+alpha)/2.00)*epsilon**2.00*lin_dens*sigma))**2.00*vp**2.00
+
+    !?? Temperaturas de normal
+    ! temp=1.0d00
+    ! tempz=5.0*temp
+    !?? Temperaturas cercanas al equilibrio 
+    temp=ts+num_onda
+    ! tempz=0.d001*temp
+    tempz=gamma*temp
+    ! temp=1.d00
+    ! tempz=5.d00
+ 
     ! rep=50000000
     ! rep=5500000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    ! rep=10000000!para 1.5*sigma
-    rep=8000000!para 1.5*sigma
+    rep=20000000!para 1.5*sigma
+    ! rep=7000000!para 1.5*sigma
     
     !!factor 
     iter=1
 
-    alpha=0.75
-    ! alpha=1.0
-    ! vp=0.001*temp
-    vp=0.0001
-    ! vp=0.0d0
+
     
 !!particiones en las que divido el espacio en z para medir la densidad en el equilibrio 
     partz=8
 ! Determinamos el numero de onda
 
-num_onda=2*pi/longy
-    
+
     ALLOCATE(r(n,2),v(n,2),sumv(iter,rep,2),tmp(rep,2),rab(2),vab(2),colisiones(iter),tiempos(rep),deltas(rep))
     ALLOCATE(densz(iter,partz),denspromz(partz),stdevz(partz),density(iter,rep,2),densityprom (rep,2))
 
@@ -117,7 +132,7 @@ num_onda=2*pi/longy
     write ( *, '(a)' ) ' '
 
 
-    WRITE(alfa,'(F10.2)')   alpha
+    WRITE(alfa,'(F10.3)')   alpha
     WRITE(eps,'(F10.2)')   epsilon
     !!!! para guardar los valores de las posiciones y velocidades iniciales!!!!!!
 
@@ -476,7 +491,7 @@ END IF
                         tcol=MIN(qij/abs(dsqrt(sum(vab**2))),(sum(rab**2)-sigma**2)/qij )
                 !comprobar que los tiempos no son negativos
                         IF (tcol<0) THEN 
-                        PRINT*, 'colisión:',c,c+1,'tiempo',tcol
+                            PRINT*, 'colisión:',c,c+1,'tiempo',tcol
                         END IF 
                         
                         IF (tcol<colt ) THEN

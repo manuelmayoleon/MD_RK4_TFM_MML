@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 from matplotlib.transforms import (
     Bbox, TransformedBbox, blended_transform_factory)
-
+import random
 # import scipy.special as special
 
 # Import math Library
@@ -31,13 +31,17 @@ from sklearn.linear_model import LinearRegression
 # -*- coding: ascii -*-
 import os, sys
 
-density= pd.read_csv("densitypromy_0.80.txt",header=None,sep='\s+', names=['re','im'])
+##**
+##????
+##///  tachado
 
-t= pd.read_csv("tiemposdecol_0.80.txt",header=None,sep='\s+', names=['t'])
+density= pd.read_csv("densitypromy_0.950.txt",header=None,sep='\s+', names=['re','im'])
+
+t= pd.read_csv("tiemposdecol_0.950.txt",header=None,sep='\s+', names=['t'])
 
 regd= pd.read_csv("reg_dens.txt",header=None,sep='\s+', names=['dens','alfa'])
 data= pd.read_csv("data.txt")
-print(data)
+# print(data[12])
 
 # ss= pd.read_csv("sparam_0.95.txt",header=None,sep='\s+', names=['s'])
 kapa= Symbol("kapa",positive=True)
@@ -57,7 +61,7 @@ n=500
 l=n/(rho*(h-1.0))
 k=2*np.pi/l
 # alfa=0.95
-alfa=0.75
+alfa=0.950
 epsilon=0.5
 vp= 0.0001 
 
@@ -116,7 +120,7 @@ eigen3=-( k*1j)-0.333333 *(0.75*(mu+kapa))*k**2
 # print(coef)
 tt=np.linspace(0,max(t['t']),1000)
 
-kk=np.linspace(0.0,0.8,1000)
+kk=np.linspace(0.0,0.2,100)
 
 
 ##!!Ajuste lineal del perfil de densidad obtenido con MD ###
@@ -134,12 +138,16 @@ denslog=np.log(density)
 x=t['t']
 
 ##* Eliminamos el régimen anterior y posterior al incremento exponencial 
-# colpp= np.linspace(0,2772,len(denslog)) ##! n. de col. para alfa=0.95
+# colpp= np.linspace(0,100,len(denslog)) ##! n. de col. para alfa=0.995
+colpp= np.linspace(0,200,len(denslog)) ##! n. de col. para alfa=0.99
+# colpp= np.linspace(0,312,len(denslog)) ##! n. de col. para alfa=0.98
+# colpp= np.linspace(0,241,len(denslog)) ##! n. de col. para alfa=0.95
 # colpp= np.linspace(0,293,len(denslog)) ##! n. de col. para alfa=0.90
 # colpp= np.linspace(0,948,len(denslog)) ##! n. de col. para alfa=0.85
 # colpp= np.linspace(0,95,len(denslog)) ##! n. de col. para alfa=0.85
-colpp= np.linspace(0,125,len(denslog)) ##! n. de col. para alfa=0.80
-
+# colpp= np.linspace(0,125,len(denslog)) ##! n. de col. para alfa=0.80
+# colpp= np.linspace(0,271,len(denslog)) ##! n. de col. para alfa=0.75
+# colpp= np.linspace(0,410,len(denslog)) ##! n. de col. para alfa=0.70
 # min_index = np.argmin(density)
 # max_index = np.argmax(density)
 # if min_index>max_index:
@@ -160,17 +168,17 @@ colpp= np.linspace(0,125,len(denslog)) ##! n. de col. para alfa=0.80
 #     colpp=colpp[min_index :max_index]
 #     density=density[min_index :max_index]
 #     denslog=denslog[min_index:max_index]
-# le= len(np.where(colpp<=750)[-1])
-# lh=0
-# # lh= len(np.where(colpp<=1200)[-1])
-# if lh != 0:  
-#     colpp=colpp[le-1:lh-1]
-#     density=density[le-1:lh-1]
-#     denslog=denslog[le-1:lh-1]
-# else: 
-#     colpp=colpp[le-1:]
-#     density=density[le-1:]
-#     denslog=denslog[le-1:]
+le= len(np.where(colpp<=30)[-1])
+lh=0
+lh= len(np.where(colpp<=80)[-1])
+if lh != 0:  
+    colpp=colpp[le-1:lh-1]
+    density=density[le-1:lh-1]
+    denslog=denslog[le-1:lh-1]
+else: 
+    colpp=colpp[le-1:]
+    density=density[le-1:]
+    denslog=denslog[le-1:]
 # reg = LinearRegression().fit(x.values.reshape((-1, 1)),np.real(denslog))
 
 ##?? Regresion lineal de los datos obtenidos para n_k a traves de MD
@@ -183,26 +191,25 @@ print('slope:', reg.coef_)
 linear_reg=reg.coef_*colpp+reg.intercept_
 
 coef=reg.coef_
-# with open('reg_dens.txt', 'a',newline='\n') as f:
-#     writer = csv.writer(f, delimiter='\t')
-#     writer.writerows(zip( coef,[alfa]))
+with open('reg_dens.txt', 'a',newline='\n') as f:
+    writer = csv.writer(f, delimiter='\t')
+    writer.writerows(zip( coef,[alfa]))
   
 
 ##?? Prediccion teorica de la pendiente 
 # tiemp=np.linspace(0.0,100.0,len(t['t']))
 # densteo=np.exp(functions.eigenvalue1(functions.Panel(1).mu(alfa,lin_dens),functions.Panel(1).kapa(alfa,lin_dens),functions.lamda1(alfa,epsilon),k)*tt*dens/20)
 
-ts = functions.Panel(1).T_s(alfa,lin_dens)
+ts = functions.Panel(1).T_s(alfa,lin_dens) #!! Esto cambia en funcion de alfa
 
 fac = (lin_dens*np.sqrt(np.pi/2)/(rho*epsilon*(1+alfa)*sigma))*(2*np.sqrt(ts))/(2+ts)
 
 print('Theoretical slope:', functions.eigenvalue2(mu,kapa,q,k)*fac)
 
+print('Theoretical slope without factor:', functions.eigenvalue2(mu,kapa,q,k))
 
 ##!!Representación del perfil de densidad ###
-##**
-##????
-##///  tachado
+
 fig = plt.figure()
 # plt.plot(tt,densteo,color='C2',label="$n_y$ ")
 plt.plot(colpp,density,color='C1',label="$n_{\frac{\pi}{L}}$ (MD)")   
@@ -246,12 +253,60 @@ plt.yticks(fontsize=20)
 
 # plt.plot(kk,functions.hcs3(kapa,mu,eta,kk),color='C4',linestyle=":",label="$\lambda_3$ ")
 
+#!! Representacion de el modo dominante frente al coeficiente de inelasticidad
+
 fig2 = plt.figure()
-alfa2=np.linspace(0.8,0.95,100)
-plt.plot(alfa2,fac*functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu(alfa2),functions.Panel(1,sigma,epsilon,vp).kapa(alfa2),functions.lamda1(alfa2,epsilon),k),color='C2',linestyle=":",label="$\lambda_2$ ")
+alfa2=np.linspace(0.001,0.99999,100)
+plt.plot(alfa2,functions.Panel(1).factor(lin_dens,rho,alfa2)*functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu_max(alfa2),functions.Panel(1,sigma,epsilon,vp).kapa_max(alfa2),functions.lamda1(alfa2,epsilon),k),color='C2',linestyle=":",label="$\lambda_2$ ")
 plt.plot(regd['alfa'],regd['dens'],marker="o",linestyle="",color='C3',label="$\lambda_2 (MD)$ ")
 
+plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
+# plt.xlabel ( r' $k$ ', fontsize=30)
+plt.ylabel ( r' $\lambda$ ',rotation=0.0,fontsize=30)
 
+plt.xlabel( r' $\alpha$ ', fontsize=30)
+# plt.xlabel ( r'$s$', fontsize=30)
+# plt.ylabel ( r' $n_2$ ',rotation=0.0,fontsize=30)
+plt.xticks(fontsize=20)
+plt.yticks(fontsize=20)
+
+plt.title ( r' \textbf {Autovalores en función de $\alpha$ ($k=2\pi/L$)}' ,fontsize=40)
+# plt.title ( r' \textbf {Autovalores en función de k. Aproximación Gaussiana $\alpha=$ %1.2f}' % alfa,fontsize=40)
+# plt.title ( r' \textbf {Coeficientes de transporte para $d=1$ }  ',fontsize=40)
+
+
+plt.legend(loc=0,fontsize=30)
+
+
+
+# !! Representacion de los autovalores 
+
+fig2=plt.figure()
+alfas = [0.9,0.95, 0.99, 0.995]
+cmap = functions.get_cmap(len(alfas))
+for x in alfas:
+    
+    r = random.random()
+
+    b =      random.random()
+
+    g = random.random()
+
+    color = (r, g, b)
+    # plt.plot(kk,functions.eigenvalue1(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),q,kk),color='C2',linestyle="--",label="$\lambda_1$ ")
+    plt.plot(kk,np.real(functions.eigenvalue1(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk)),linewidth=1.5,color=color,label=" $\lambda_1$ %1.3f" % x)
+    plt.plot(kk,np.real(functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk)),linewidth=1.5,linestyle="--",color=color,label=" $\lambda_2$ %1.3f" % x)
+    plt.plot(kk,functions.eigenvalue3(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk),linewidth=1.5,linestyle=":",color=color,label=" $\lambda_3$ %1.3f" % x)
+    # plt.plot(kk,functions.eigenvalue3(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk),color='C3',linestyle="--",label="$\lambda_3$ ")
+
+# plt.plot(kk,functions.eigenvalue1(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),q,kk),color='C2',linestyle="--",label="$\lambda_1$ ")
+# plt.plot(kk,np.real(functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk)),linewidth=1.5,linestyle="--",color='C4',label="$\lambda_2$ ")
+# plt.plot(kk,functions.eigenvalue3(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk),color='C3',linestyle="--",label="$\lambda_3$ ")
+# plt.plot(kk,functions.eigenvalue1(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),q,kk),color='C2',linestyle="--",label="$\lambda_1$ ")
+# plt.plot(kk,np.real(functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk)),linewidth=1.5,linestyle="--",color='C4',label="$\lambda_2$ ")
+# plt.plot(kk,functions.eigenvalue3(functions.Panel(1,sigma,epsilon,vp).mu(x),functions.Panel(1,sigma,epsilon,vp).kapa(x),functions.lamda1(x,epsilon),kk),color='C3',linestyle="--",label="$\lambda_3$ ")
+# plt.plot(regd['alfa'],regd['dens'],marker="o",linestyle="",color='C3',label="$\lambda_2 (MD)$ ")
+# print(functions.Panel(1,sigma,epsilon,vp).factor(lin_dens,rho,0.99999)*functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu_max(0.99999),functions.Panel(1,sigma,epsilon,vp).kapa_max(0.99999),functions.lamda1(0.99999,epsilon),k))
 # plt.plot(kk,functions.eigenvalue1(mu,kapa,q,kk),color='C2',label="$\lambda_1$ ")
 # plt.plot(kk,functions.eigenvalue1(functions.Panel(1,sigma,epsilon,vp).mu_max(alfa),functions.Panel(1,sigma,epsilon,vp).kapa_max(alfa),q,kk),color='C2',linestyle="--",label="$\lambda_1(a_2=0)$ ")
 # plt.plot(kk,functions.eigen1_mathematica(functions.Panel(1,sigma,epsilon,vp).mu_adim(alfa,lin_dens),functions.Panel(1,sigma,epsilon,vp).kapa_adim(alfa,lin_dens),functions.lamda1(alfa,epsilon),kk),color='C2',linestyle=":",label="$\lambda_1$ ")
@@ -268,13 +323,13 @@ plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
 # plt.xlabel ( r' $k$ ', fontsize=30)
 plt.ylabel ( r' $\lambda$ ',rotation=0.0,fontsize=30)
 
-plt.xlabel( r' $\alpha$ ', fontsize=30)
+plt.xlabel( r' $k$ ', fontsize=30)
 # plt.xlabel ( r'$s$', fontsize=30)
 # plt.ylabel ( r' $n_2$ ',rotation=0.0,fontsize=30)
 plt.xticks(fontsize=20)
 plt.yticks(fontsize=20)
 
-plt.title ( r' \textbf {Autovalores en función de $\alpha$ ($k=2\pi/L$)}' ,fontsize=40)
+plt.title ( r' \textbf {Autovalores en función de $\alpha$}' ,fontsize=40)
 # plt.title ( r' \textbf {Autovalores en función de k. Aproximación Gaussiana $\alpha=$ %1.2f}' % alfa,fontsize=40)
 # plt.title ( r' \textbf {Coeficientes de transporte para $d=1$ }  ',fontsize=40)
 

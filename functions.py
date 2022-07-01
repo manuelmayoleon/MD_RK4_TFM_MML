@@ -99,7 +99,12 @@ def eigen3_taylor(kapa,q,k):
         ((-q**3+0j)**(2/3)+0j))* k/(k *q**3* (-q**3+0j)**(1/3)+0j) - 1/(q**2* (-q**3+0j)**(1/3)) *(0.166667 + 0.288675 *1j)* ((1.125 + 1.94856 *1j)* q**2 - (0.5 + 
        0.866025 *1j)* kapa* q**3 + (0.5 - 0.866025 *1j)* kapa* q**2 *(-q**3+0j)**(1/3) - (2.25+0j)*(-q**3+0j)**(2/3) + (1+0j)* kapa *q* (-q**3+0j)**(2/3))*  k**2
 
-
+def hcs1(kapa,mu,eta,k):
+        return -0.5*k**2*kapa - 0.111111111111111*(3.0*eta**2 + 4.5*eta*k**2*kapa + 2.25*k**4*kapa**2 - 9.0*k**2)/(-0.25*eta*k**2 + 0.125*k**6*kapa**3 + 0.75*k**4*kapa - 0.75*k**4*mu - 0.25*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2) + (-(0.333333333333333*eta**2 + 0.5*eta*k**2*kapa + 0.25*k**4*kapa**2 - k**2)**3 + 0.5625*(-0.333333333333333*eta*k**2 + 0.166666666666667*k**6*kapa**3 + k**4*kapa - k**4*mu - 0.333333333333333*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2))**2)**0.5)**(1/3) - 1.0*(-0.25*eta*k**2 + 0.125*k**6*kapa**3 + 0.75*k**4*kapa - 0.75*k**4*mu - 0.25*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2) + (-(0.333333333333333*eta**2 + 0.5*eta*k**2*kapa + 0.25*k**4*kapa**2 - k**2)**3 + 0.5625*(-0.333333333333333*eta*k**2 + 0.166666666666667*k**6*kapa**3 + k**4*kapa - k**4*mu - 0.333333333333333*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2))**2)**0.5)**(1/3)
+def hcs2(kapa,mu,eta,k):
+        return -0.5*k**2*kapa - 0.111111111111111*(-0.5 - 0.866025403784439*1j)*(3.0*eta**2 + 4.5*eta*k**2*kapa + 2.25*k**4*kapa**2 - 9.0*k**2)/(-0.25*eta*k**2 + 0.125*k**6*kapa**3 + 0.75*k**4*kapa - 0.75*k**4*mu - 0.25*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2) + (-(0.333333333333333*eta**2 + 0.5*eta*k**2*kapa + 0.25*k**4*kapa**2 - k**2)**3 + 0.5625*(-0.333333333333333*eta*k**2 + 0.166666666666667*k**6*kapa**3 + k**4*kapa - k**4*mu - 0.333333333333333*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2))**2)**0.5)**(1/3) - 1.0*(-0.5 + 0.866025403784439*1j)*(-0.25*eta*k**2 + 0.125*k**6*kapa**3 + 0.75*k**4*kapa - 0.75*k**4*mu - 0.25*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2) + (-(0.333333333333333*eta**2 + 0.5*eta*k**2*kapa + 0.25*k**4*kapa**2 - k**2)**3 + 0.5625*(-0.333333333333333*eta*k**2 + 0.166666666666667*k**6*kapa**3 + k**4*kapa - k**4*mu - 0.333333333333333*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2))**2+0j)**0.5)**(1/3)
+def hcs3(kapa,mu,eta,k):
+        return -0.5*k**2*kapa - 0.111111111111111*(-0.5 + 0.866025403784439*1j)*(3.0*eta**2 + 4.5*eta*k**2*kapa + 2.25*k**4*kapa**2 - 9.0*k**2)/(-0.25*eta*k**2 + 0.125*k**6*kapa**3 + 0.75*k**4*kapa - 0.75*k**4*mu - 0.25*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2) + (-(0.333333333333333*eta**2 + 0.5*eta*k**2*kapa + 0.25*k**4*kapa**2 - k**2)**3 + 0.5625*(-0.333333333333333*eta*k**2 + 0.166666666666667*k**6*kapa**3 + k**4*kapa - k**4*mu - 0.333333333333333*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2))**2)**0.5)**(1/3) - 1.0*(-0.5 - 0.866025403784439*1j)*(-0.25*eta*k**2 + 0.125*k**6*kapa**3 + 0.75*k**4*kapa - 0.75*k**4*mu - 0.25*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2) + (-(0.333333333333333*eta**2 + 0.5*eta*k**2*kapa + 0.25*k**4*kapa**2 - k**2)**3 + 0.5625*(-0.333333333333333*eta*k**2 + 0.166666666666667*k**6*kapa**3 + k**4*kapa - k**4*mu - 0.333333333333333*k**2*kapa*(-eta**2 - 1.5*eta*k**2*kapa + 3.0*k**2))**2+0j)**0.5)**(1/3)
 ##!! Coeficientes de transporte 
  
 def a2(alpha):    
@@ -110,6 +115,8 @@ class Panel:
         self.sigma = sigma
         self.vp=  vp
         self.epsilon = epsilon 
+        self.eta0 = (2+self.d)*np.sqrt(np.pi/2)/8
+        self.kapa0= (2+self.d)*self.eta0/2
     def a2d(self,alpha):
             return  16*(1-2*alpha**2.00)*(1-alpha)/(9+24*self.d+(8*self.d-41)*alpha+30*alpha**2.00*(1-alpha))
     def eta(self, alpha):
@@ -125,27 +132,29 @@ class Panel:
     def nu_max(self,alpha):
             return (1+alpha)*((self.d-1)/2+3*(self.d+8)*(1-alpha))
     def kapa(self,alpha):
-            return (1+2*self.a2d(alpha))/(self.nu(alpha)+2*self.d*self.eta(alpha))
+            return (1+2*self.a2d(alpha))/(self.nu(alpha)+2*self.d*self.eta(alpha))*self.kapa0
     def mu(self,alpha):
-            return 2*self.eta(alpha)*(self.kapa(alpha)+self.a2d(alpha)/(self.d*self.eta(alpha)))/(2*(self.d-1)*self.nu(alpha)/self.d-3*self.eta(alpha))
+            return 2*self.eta(alpha)*(self.kapa(alpha)+self.a2d(alpha)/(self.d*self.eta(alpha)))/(2*(self.d-1)*self.nu(alpha)/self.d-3*self.eta(alpha))*self.kapa0
     def kapa_max(self,alpha):
             return (1)/(self.nu_max(alpha)+2*self.d*self.eta_max(alpha))
     def mu_max(self,alpha):
             return 2*self.eta_max(alpha)*(self.kapa_max(alpha))/(2*(self.d-1)*self.nu_max(alpha)/self.d-3*self.eta_max(alpha))
-    def kapa_adim(self,alpha,density):
-            return self.kapa(alpha)*self.sigma*np.sqrt(1/(2*self.T_s(alpha,density)))
-    def mu_adim(self,alpha,density):
-            return self.mu(alpha)*self.sigma*density*np.sqrt(1/(2*self.T_s(alpha,density)**3.00))
-    def kapa_adim_max(self,alpha,density):
-            return self.kapa_max(alpha)*self.sigma*np.sqrt(1/(2*self.T_s(alpha,density)))
-    def mu_adim_max(self,alpha,density):
-            return self.mu_max(alpha)*self.sigma*density*np.sqrt(1/(2*self.T_s(alpha,density)**3.00))
     def kc(self,alpha):
             return np.sqrt(2/(self.d+2)*(self.kapa(alpha)-self.mu(alpha)))
+    def factor(self,lin_dens,rho,alpha):
+         return (lin_dens*np.sqrt(np.pi/2)/(rho*self.epsilon*(1+alpha)*self.sigma))*(2*np.sqrt( self.T_s(alpha,lin_dens)))/(2+self.T_s(alpha,lin_dens))
+            
 
 # print(lamda1(0.95,0.5))
 
 # print(eigenvalue1(Panel(1).mu(0.95),Panel(1).kapa(0.95),lamda1(0.95,0.5),9.424777960769378e-05))
+
+
+#!!! Random colors 
+def get_cmap(n, name='hsv'):
+    '''Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
+    RGB color; the keyword argument name must be a standard mpl colormap name.'''
+    return plt.cm.get_cmap(name, n)
 
 
 
