@@ -6,25 +6,39 @@ import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 from matplotlib.transforms import (
     Bbox, TransformedBbox, blended_transform_factory)
+import functions
 
-
-temp= pd.read_csv("temperaturas_0.90_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
-tiempo= pd.read_csv("tiemposdecol_0.90.txt",names=["t"])
+temp= pd.read_csv("temperaturas_0.95_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
+tiempo= pd.read_csv("tiemposdecol_0.95.txt",names=["t"])
 # datos= pd.read_csv("data.txt")
  
+n=500
+h=1.5
+alfa=0.95
+epsilon=0.5
+rho=0.03
+vp=0.0001
+l=n/(rho*(h-1.0))       
+k=2*np.pi/l
+lin_dens=n/l             
+ts = functions.Panel(1).T_s(alfa,lin_dens) #!! Esto cambia en funcion de alfa
+print("temp_s")
+print(ts)
+gamma = functions.Panel(1).gamma(alfa)
 # print(datos)                   
-                    
-x0=1.0
-y0=5.0
+#?? Datos para el método RK
+
+# x0=1.0
+# y0=5.0
+# x0=ts+k
+# y0=gamma*x0
+x0= temp['y'][0]
+y0=temp['z'][0]
+
 a=0
 b=int(tiempo["t"][len(tiempo)-1])
 # b=30050
 h=0.2
-
-alfa=0.90
-epsilon=0.5
-rho=0.03
-vp=0.0001
 
 # print(temp)
 # print(tiempo)
@@ -39,7 +53,7 @@ class Panel:
     def f(self,t1,t2,t):
         
         # return np.sqrt(np.pi)*(1+alfa)*epsilon*rho*np.sqrt(t1)*( -(1-alfa)*t1+epsilon**2.0*(-(5*alfa-1)*t1 +(3*alfa+1)*t2 )/12)
-        return 2.0*(1+self.alfa)*self.epsilon*self.rho*np.sqrt(t1)*( -(1-self.alfa)*t1+self.epsilon**2.0*(-4.0*self.alfa*t1 +(3.0*self.alfa+1.0)*t2 )/12)/np.sqrt(np.pi)
+        return 2.0*(1+self.alfa)*self.epsilon*self.rho*np.sqrt(t1)*( -(1-self.alfa)*t1+self.epsilon**2.0*(-self.alfa*t1*4.0 +(3.0*self.alfa+1.0)*t2 )/12)/np.sqrt(np.pi)
         # return 4.0*epsilon**3.0*rho*np.sqrt(tx)*( ty -tx )/(3.0*np.sqrt(np.pi))
 
     def g(self,t1,t2,t):
@@ -81,7 +95,9 @@ def runge_kutta_system(f, g, x0, y0, a, b, h):
         y[i + 1] = y[i] + (1 / 6) * (l1 + 2 * l2 + 2 * l3 + 2 * l4)
     plt.plot(t, x,color='C2',label='$T_y$ ')
     plt.plot(t, y,color='C3',label='$T_z$')
+    print(min(x))
     plt.legend(loc=0,fontsize=30)
     plt.show()
 # np.seterr('raise')
 runge_kutta_system(Panel(alfa,epsilon,rho,vp).f,Panel(alfa,epsilon,rho,vp).g,x0,y0,a,b,h)
+

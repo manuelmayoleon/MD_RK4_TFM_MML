@@ -126,7 +126,7 @@ class Panel:
     def gamma(self,alpha):
             return (4*alpha*self.epsilon**2.00+12*(1-alpha))/((1+3*alpha)*self.epsilon**2.00)
     def T_s(self,alpha,density):
-            return ((3*np.sqrt(np.pi)*self.gamma(alpha))/((1+alpha)*(self.gamma(alpha)-(1+alpha)/2)*self.epsilon**2.00*density*self.sigma))**2.00*self.vp**2
+            return ((3*np.sqrt(np.pi)*self.gamma(alpha))/((1+alpha)*(self.gamma(alpha)-(1+alpha)/2)*self.epsilon**3.00*density*self.sigma))**2.00*self.vp**2
     def nu(self,alpha):
             return (1+alpha)*((self.d-1)/2+3*(self.d+8)*(1-alpha)+(4+5*self.d-3*(4-self.d)*alpha)*self.a2d(alpha)/512)
     def nu_max(self,alpha):
