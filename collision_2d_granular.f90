@@ -14,8 +14,10 @@ PROGRAM final_version
   !
   !    Manuel Mayo León 
   !
-!?? Cosas en azul
-!** Cosas en verde
+!! AVISOS URGENTES 
+!** CONSEJOS 
+!???? EXPLICACIONES 
+!///  tachado
 
 
 implicit none
@@ -33,7 +35,7 @@ implicit none
     REAL(kind=8),ALLOCATABLE,DIMENSION(:):: denspromz, stdevz !densidad promedio en z en el tiempo y su desviacion estandar 
     REAL(kind=8)::temp,tempz,H,longy,sigma,epsilon,rho !temperaturas en "y" y en "z", altura vertical y anchura, sigma==tamaño de la particula, rho=density
     REAL(kind=8)::alpha, vp  !! coeficiente de restitucion y velocidad que se introduce a traves de la pared 
-    LOGICAL :: boolean,granular,densz_bool
+    LOGICAL :: boolean,granular,densz_bool,pos_para_t
     REAL(kind=8)::tcol,colt !tiempo de colision, tiempo para comparar y tiempo inicial
     INTEGER::rep,iter,n,iseed !numero de repeticiones que se realizan (tiempo) y numero de iteraciones  (numero de copias)
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::rab,vab !distancias y velocidades relativas
@@ -42,7 +44,9 @@ implicit none
     REAL(kind=8)::bij,qij,discr,t !bij=(ri-rj)*(vi-vj), discr es el discriminante de la solucion de segundo grado, t=tiempo de colision
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::tiempos,deltas !tiempos de colision
     REAL(kind=8), parameter :: pi = 4 * atan (1.0_8)
+    ! REAL(kind=8) :: num_onda,ts,gamma,lin_dens, nu,eta,kapa
     REAL(kind=8) :: num_onda,ts,gamma,lin_dens
+    
     !!! para deteminar el tiempo de cálculo
     REAL(kind=4):: start, finish
     character(len=10)::alfa,eps
@@ -65,7 +69,7 @@ implicit none
     rho=0.03d00
     ! rho=0.2111d00
     ! alpha=0.70
-    alpha=0.990
+    alpha=0.995
     ! vp=0.001*temp
     vp=0.0001
     ! vp=0.0d0
@@ -76,12 +80,16 @@ implicit none
     lin_dens= rho*(H-sigma)
 
     num_onda=2*pi/longy
+
+    ! eta = (3/4)*(1-alpha**2.00)
+    ! nu=(1+alpha)*(3*(1+8)*(1-alpha))
+    ! kapa = (1)/(nu+2*eta)
     
 
 
-!! calculo temperatura estacionaria teórica
+!? calculo temperatura estacionaria teórica
     gamma=(4.00*alpha*epsilon**2.00+12.00*(1.00-alpha))/((1+3.00*alpha)*epsilon**2.00)
-    ts=((3.00*Sqrt(pi)*gamma)/((1.00+alpha)*(gamma-(1.00+alpha)/2.00)*epsilon**2.00*lin_dens*sigma))**2.00*vp**2.00
+    ts=((3.00*Sqrt(pi)*gamma)/((1.00+alpha)*(gamma-(1.00+alpha)/2.00)*epsilon**3.00*lin_dens*sigma))**2.00*vp**2.00
 
     !?? Temperaturas de normal
     ! temp=1.0d00
@@ -91,12 +99,14 @@ implicit none
     ! tempz=0.d001*temp
     tempz=gamma*temp
     ! temp=1.d00
+    ! temp=5.0d00
+    ! tempz=5.3d00 
     ! tempz=5.d00
  
     ! rep=50000000
     ! rep=5500000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=20000000!para 1.5*sigma
+    rep=220000000!para 1.5*sigma
     ! rep=7000000!para 1.5*sigma
     
     !!factor 
@@ -131,7 +141,7 @@ implicit none
      
     write ( *, '(a)' ) ' '
 
-
+ !!! Convertir a caracteres alfa y epsilon !!!!!!!!
     WRITE(alfa,'(F10.3)')   alpha
     WRITE(eps,'(F10.2)')   epsilon
     !!!! para guardar los valores de las posiciones y velocidades iniciales!!!!!!
@@ -149,16 +159,19 @@ implicit none
     call cpu_time(start)
     !Abro los archivos en los que voy a guardar los valores de las temperaturas, velocidades, posiciones, etc...
     
-    ! If granular eqv true, the particles lost energy on each collision (inelastic disks) 
-    !else, the collision is elastic between particles 
+    !?? If granular eqv true, the particles lost energy on each collision (inelastic disks) 
+    !??else, the collision is elastic between particles 
     granular=.TRUE.
     ! granular=.FALSE.
     
-    ! If boolean eqv false, the particle is confined between two rigid plates 
-    !else, the lower plate is vibrating in a sawtooth way 
+    !?? If boolean eqv false, the particle is confined between two rigid plates 
+    !??else, the lower plate is vibrating in a sawtooth way 
     boolean=.TRUE.
     ! boolean=.FALSE.
-
+    !?? If boolean eqv true, the program saves positions for diferent times steps     
+    pos_para_t = .TRUE.
+    ! pos_para_t = .FALSE.
+    
 
     ! If densz_bool eqv false, the density is not calculated
     !else, the density is calculated
@@ -239,7 +252,7 @@ implicit none
             !colision entre particula a y muro
             IF (ni(2)>n) THEN
 
-                CALL wall_collide(ni(1),ni(2))            
+                CALL wall_collide(ni(1),ni(2),H,sigma)            
 
                    
 
@@ -269,8 +282,9 @@ implicit none
                 !     ! END DO 
                 ! END IF
 
-                    
-              
+            IF ((j>=rep-10).AND. (pos_para_t .EQV. .TRUE.) ) THEN 
+              CALL save_med_distribution(alfa,j)
+            END IF 
              
                
          
@@ -367,6 +381,12 @@ END IF
         END DO
     CLOSE(10) 
 
+        OPEN(10,FILE='vel_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')   
+        DO l=1,n
+         WRITE(10,*) v(l,1), v(l,2)
+        END DO
+    CLOSE(10) 
+
 
 
     
@@ -425,6 +445,25 @@ END IF
 
         end subroutine save_initial_distribution
 
+        subroutine save_med_distribution(aa,bb)
+            
+            character(len=10)::cc,aa
+            INTEGER :: bb,ii
+            ! REAL(kind=8) :: aa 
+            WRITE(cc,'(I10)') bb 
+            ! WRITE(dd,'(F8.3)') aa 
+
+            OPEN(98,FILE='pos_' // trim(adjustl(aa)) // '_tiempo_'// trim(adjustl(cc)) // '.txt',STATUS='unknown')                       
+            OPEN(99,FILE='vel_' // trim(adjustl(aa)) // '_tiempo_' // trim(adjustl(cc)) // '.txt',STATUS='unknown')                      
+                                 
+            DO ii=1,n                                                                
+                WRITE(98,*) r(ii,1), r(ii,2)
+                WRITE(99,*)  v(ii,1), v(ii,2)
+            END DO
+            CLOSE(98)
+            CLOSE(99)
+
+        end subroutine save_med_distribution
 
         subroutine save_data_file()
             implicit none 
@@ -591,16 +630,17 @@ END IF
             IMPLICIT NONE
 
             r(:,1)     = r(:,1) + colt * v(:,1) 
-            r(:,2)     = r(:,2) + colt* v(:,2)   ! Advance all positions by t (box=1 units)
+            r(:,2)     = r(:,2) + colt* v(:,2)   ! Advance all positions by t 
             r(:,1)     = r(:,1) - longy*ANINT(r(:,1)/(longy)) ! Apply periodic boundaries
         
         end subroutine evolve_positions
         !!!!! COLISIONES ENTRE UNA PARTICULA Y LA PARED. 
         ! granular=.FALSE. en el caso de colisiones con dos paredes rígidas
         ! granular =.TRUE. en el caso de que la pared de abajo sea de tipo diente de sierra 
-        subroutine wall_collide(p,q)
+        subroutine wall_collide(p,q,alt,diameter)
             IMPLICIT NONE
             INTEGER :: p,q 
+            REAL(kind=8)::alt,diameter
             ! LOGICAL :: boolean
             
             if (boolean .EQV. .FALSE.) THEN 
@@ -608,8 +648,10 @@ END IF
             ELSE 
                 IF(q==n+1) THEN 
                     v(p,2)=-v(p,2)
+                    !  r(p,2)=H-sigma
                 ELSE 
                     v(p,2)=2.0d00*vp-v(p,2)
+                    ! r(p,2)=sigma
                     ! print*, "collision with bottom wall"
                 END IF 
             END IF

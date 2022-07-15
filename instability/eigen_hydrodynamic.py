@@ -17,6 +17,7 @@ from sympy import *
 
 kapa= Symbol("kapa",positive=True)
 mu=Symbol("mu",positive=True)
+eta= Symbol("eta")
 k= Symbol("k")
 q=Symbol("q")
 
@@ -41,21 +42,23 @@ x = Symbol('x')
 
 p = M.charpoly(x)
 
+
+
 print(p)
 # polynomial=- 0.5 * k**4*kapa + 0.5 * k**4*mu + 0.5* k**2*q -  k**2 *x - k**2 *kapa* x**2 -  q* x**2 - x**3
-# poli2=1.0*x**3 + (1.0*k**2*kapa + 1.0*q)*x**2 + 1.0*k**2*x + 0.5*k**4*kapa - 0.5*k**4*mu - 0.5*k**2*q
+poli2=1.0*x**3 + (1.0*k**2*kapa + 1.0*q)*x**2 + 1.0*k**2*x + 0.5*k**4*kapa - 0.5*k**4*mu - 0.5*k**2*q
 
-polynomial=- 0.5 * k**4*kapa + 0.5 * k**4*mu  -  k**2 *x - k**2 *kapa* x**2 - x**3
+polynomial=x**3 + 1.5*k**2*kapa*x**2 +(3*k**2*(1-0.5*eta*kapa)-eta**2)*x+ 1.5*k**4*kapa - 1.5*k**4*mu - 0.5*k**2*eta
 # poli2_noq=1.0*x**3 + (1.0*k**2*kapa )*x**2 + 1.0*k**2*x + 0.5*k**4*kapa - 0.5*k**4*mu 
 
 
 
 
-# quadratic_equation = Eq(polynomial, 0)
+quadratic_equation = Eq(polynomial, 0)
 
-# solucion=solve(quadratic_equation, x)
+solucion=solve(quadratic_equation, x)
 
-# print(solucion[0])
+print(solucion[2])
 
 # coeff = [- 0.5 * k**4*kapa + 0.5 * k**4*mu + 0.5* k**2*q , -  k**2,  - k**2 *kapa-  q, -1]
 

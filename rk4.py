@@ -8,13 +8,13 @@ from matplotlib.transforms import (
     Bbox, TransformedBbox, blended_transform_factory)
 import functions
 
-temp= pd.read_csv("temperaturas_0.95_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
-tiempo= pd.read_csv("tiemposdecol_0.95.txt",names=["t"])
+temp= pd.read_csv("temperaturas_0.995_0.50.txt" ,header=None,sep='\s+' ,names= ["y","z"])
+tiempo= pd.read_csv("tiemposdecol_0.995.txt",names=["t"])
 # datos= pd.read_csv("data.txt")
  
 n=500
 h=1.5
-alfa=0.95
+alfa=0.995
 epsilon=0.5
 rho=0.03
 vp=0.0001

@@ -27,20 +27,39 @@ import functions
 
 from sklearn.linear_model import LinearRegression
 
+from sklearn.metrics import mean_absolute_error
+
+
 #!/usr/bin/python
 # -*- coding: ascii -*-
 import os, sys
-
-##**
-##????
+##!! AVISOS URGENTES 
+##** CONSEJOS 
+##???? EXPLICACIONES 
 ##///  tachado
 
-density= pd.read_csv("densitypromy_0.950.txt",header=None,sep='\s+', names=['re','im'])
+density= pd.read_csv("densitypromy_0.995.txt",header=None,sep='\s+', names=['re','im'])
 
-t= pd.read_csv("tiemposdecol_0.950.txt",header=None,sep='\s+', names=['t'])
+t= pd.read_csv("tiemposdecol_0.995.txt",header=None,sep='\s+', names=['t'])
 
 regd= pd.read_csv("reg_dens.txt",header=None,sep='\s+', names=['dens','alfa'])
-data= pd.read_csv("data.txt")
+info= pd.read_csv("data.txt",header=None,sep='\s+')
+
+colp = np.array(info[16])
+
+
+print("colisiones por partícula")
+
+print(colp[-1])
+
+
+ 
+ 
+cols =colp[-1]
+
+
+
+
 # print(data[12])
 
 # ss= pd.read_csv("sparam_0.95.txt",header=None,sep='\s+', names=['s'])
@@ -61,19 +80,27 @@ n=500
 l=n/(rho*(h-1.0))
 k=2*np.pi/l
 # alfa=0.95
-alfa=0.950
+alfa=0.995
 epsilon=0.5
 vp= 0.0001 
 
 
 
 dens = n/(l*(h-sigma))
-lin_dens = n/l
+lin_dens = rho*(h-sigma)
 
 # s=sum(ss['s'])
 # corr_t=s/max(t['t'])
+#?? Se calcula la temperatura estacionaria teórica para usarla posteriormente
+ts = functions.Panel(1).T_s(alfa,lin_dens) #!! Esto cambia en funcion de alfa
 
+print("Temperatura estacionaria")
+print(ts)
 
+rel_col_t= cols/(np.sqrt(2/np.pi)*(1+alfa)*lin_dens*np.sqrt(2*ts))
+
+print("relacion tiempo con col.p.p")
+print(rel_col_t)
 kapa=functions.Panel(1).kapa(alfa)
 mu=functions.Panel(1).mu(alfa)
 eta=functions.Panel(1).eta(alfa)
@@ -120,7 +147,7 @@ eigen3=-( k*1j)-0.333333 *(0.75*(mu+kapa))*k**2
 # print(coef)
 tt=np.linspace(0,max(t['t']),1000)
 
-kk=np.linspace(0.0,0.2,100)
+kk=np.linspace(0.0,0.02,100)
 
 
 ##!!Ajuste lineal del perfil de densidad obtenido con MD ###
@@ -138,8 +165,10 @@ denslog=np.log(density)
 x=t['t']
 
 ##* Eliminamos el régimen anterior y posterior al incremento exponencial 
-# colpp= np.linspace(0,100,len(denslog)) ##! n. de col. para alfa=0.995
-colpp= np.linspace(0,200,len(denslog)) ##! n. de col. para alfa=0.99
+
+colpp= np.linspace(0,cols,len(denslog)) ##! n. de col. para la última simulacion 
+# colpp= np.linspace(0,528,len(denslog)) ##! n. de col. para alfa=0.995
+# colpp= np.linspace(0,200,len(denslog)) ##! n. de col. para alfa=0.99
 # colpp= np.linspace(0,312,len(denslog)) ##! n. de col. para alfa=0.98
 # colpp= np.linspace(0,241,len(denslog)) ##! n. de col. para alfa=0.95
 # colpp= np.linspace(0,293,len(denslog)) ##! n. de col. para alfa=0.90
@@ -168,9 +197,9 @@ colpp= np.linspace(0,200,len(denslog)) ##! n. de col. para alfa=0.99
 #     colpp=colpp[min_index :max_index]
 #     density=density[min_index :max_index]
 #     denslog=denslog[min_index:max_index]
-le= len(np.where(colpp<=30)[-1])
+le= len(np.where(colpp<=750)[-1])
 lh=0
-lh= len(np.where(colpp<=80)[-1])
+# lh= len(np.where(colpp<=1700)[-1])
 if lh != 0:  
     colpp=colpp[le-1:lh-1]
     density=density[le-1:lh-1]
@@ -179,28 +208,34 @@ else:
     colpp=colpp[le-1:]
     density=density[le-1:]
     denslog=denslog[le-1:]
-# reg = LinearRegression().fit(x.values.reshape((-1, 1)),np.real(denslog))
+#** Es la regresion en escala temporal
+#!! reg = LinearRegression().fit(x.values.reshape((-1, 1)),np.real(denslog))
 
 ##?? Regresion lineal de los datos obtenidos para n_k a traves de MD
 
 reg = LinearRegression().fit(colpp.reshape(-1,1),np.real(denslog))
+
 r_sq = reg.score(colpp.reshape((-1, 1)), np.real( denslog))
+inferred= reg.predict(colpp.reshape((-1, 1)))
+model_error = mean_absolute_error(np.real(denslog), inferred)
 print('coefficient of determination:', r_sq)
 print('intercept:', reg.intercept_)
 print('slope:', reg.coef_)
+print('model error:',model_error)
 linear_reg=reg.coef_*colpp+reg.intercept_
 
 coef=reg.coef_
-with open('reg_dens.txt', 'a',newline='\n') as f:
-    writer = csv.writer(f, delimiter='\t')
-    writer.writerows(zip( coef,[alfa]))
+# with open('reg_dens.txt', 'a',newline='\n') as f:
+#     writer = csv.writer(f, delimiter='\t')
+#     writer.writerows(zip( coef,[alfa]))
   
 
 ##?? Prediccion teorica de la pendiente 
 # tiemp=np.linspace(0.0,100.0,len(t['t']))
 # densteo=np.exp(functions.eigenvalue1(functions.Panel(1).mu(alfa,lin_dens),functions.Panel(1).kapa(alfa,lin_dens),functions.lamda1(alfa,epsilon),k)*tt*dens/20)
 
-ts = functions.Panel(1).T_s(alfa,lin_dens) #!! Esto cambia en funcion de alfa
+
+
 
 fac = (lin_dens*np.sqrt(np.pi/2)/(rho*epsilon*(1+alfa)*sigma))*(2*np.sqrt(ts))/(2+ts)
 
@@ -256,9 +291,9 @@ plt.yticks(fontsize=20)
 #!! Representacion de el modo dominante frente al coeficiente de inelasticidad
 
 fig2 = plt.figure()
-alfa2=np.linspace(0.001,0.99999,100)
-plt.plot(alfa2,functions.Panel(1).factor(lin_dens,rho,alfa2)*functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu_max(alfa2),functions.Panel(1,sigma,epsilon,vp).kapa_max(alfa2),functions.lamda1(alfa2,epsilon),k),color='C2',linestyle=":",label="$\lambda_2$ ")
-plt.plot(regd['alfa'],regd['dens'],marker="o",linestyle="",color='C3',label="$\lambda_2 (MD)$ ")
+alfa2=np.linspace(0.90,0.9999,100)
+plt.plot(alfa2,functions.eigenvalue2(functions.Panel(1,sigma,epsilon,vp).mu_max(alfa2),functions.Panel(1,sigma,epsilon,vp).kapa_max(alfa2),functions.lamda1(alfa2,epsilon),k),color='C2',linestyle=":",label="$\lambda_2$ ")
+# plt.plot(regd['alfa'],regd['dens'],marker="o",linestyle="",color='C3',label="$\lambda_2 (MD)$ ")
 
 plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
 # plt.xlabel ( r' $k$ ', fontsize=30)
@@ -278,10 +313,31 @@ plt.title ( r' \textbf {Autovalores en función de $\alpha$ ($k=2\pi/L$)}' ,font
 plt.legend(loc=0,fontsize=30)
 
 
+#!! Representacion de la tempertatura estacionaria en función de alfa 
+# fig23 = plt.figure()
+
+# plt.plot(alfa2, functions.Panel(1).T_s(alfa2,lin_dens) ,color='C2',linestyle=":",label="$\lambda_2$ ")
+
+# plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
+# # plt.xlabel ( r' $k$ ', fontsize=30)
+# plt.ylabel ( r' $T_s$ ',rotation=0.0,fontsize=30)
+
+# plt.xlabel( r' $\alpha$ ', fontsize=30)
+# # plt.xlabel ( r'$s$', fontsize=30)
+# # plt.ylabel ( r' $n_2$ ',rotation=0.0,fontsize=30)
+# plt.xticks(fontsize=20)
+# plt.yticks(fontsize=20)
+
+# plt.title ( r' \textbf Temperatura estacionaria en función de $\alpha$' ,fontsize=40)
+# plt.title ( r' \textbf {Autovalores en función de k. Aproximación Gaussiana $\alpha=$ %1.2f}' % alfa,fontsize=40)
+# plt.title ( r' \textbf {Coeficientes de transporte para $d=1$ }  ',fontsize=40)
+
+
+plt.legend(loc=0,fontsize=30)
 
 # !! Representacion de los autovalores 
 
-fig2=plt.figure()
+fig22=plt.figure()
 alfas = [0.9,0.95, 0.99, 0.995]
 cmap = functions.get_cmap(len(alfas))
 for x in alfas:
