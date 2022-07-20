@@ -5,11 +5,13 @@ import scipy . stats as ss
 import math
 import matplotlib . mlab as mlab
 import matplotlib . pyplot as plt
+import matplotlib.animation as manimation
 from scipy import optimize
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 from matplotlib.transforms import (
     Bbox, TransformedBbox, blended_transform_factory)
+import os 
 
 
 
@@ -21,18 +23,34 @@ from matplotlib.transforms import (
 # vinit=np.genfromtxt("velocidad_init.txt", names=["vy","vz"])
 # temp=np.genfromtxt("temperaturas.txt" ,names= ["y","z"])
 # tiempo=np.genfromtxt("tiemposdecol.txt",names=["t"])
+path = os.getcwd()
 
-r= pd.read_csv("pos_0.995.txt",header=None,sep='\s+',names=["ry","rz"])
-v =  pd.read_csv("velocidad_0.95.txt" ,header=None,sep='\s+' , names=["vy","vz"])
+
+print(path)
+# for filename in os.listdir(path):
+#     if filename.startswith('pos_0.995_tiempo'):
+#         ri[i] = pd.read_csv(filename,header=None,sep='\s+',names=["ryy","rzz"])
+#     i=i+1   
+
+# r= pd.read_csv("pos_0.995_tiempo_50000000.txt",header=None,sep='\s+',names=["ry","rz"])
+# r= pd.read_csv("pos_0.995_tiempo_50000000.txt",header=None,sep='\s+',names=["ry","rz"])
+r= pd.read_csv("pos_0.990.txt",header=None,sep='\s+',names=["ry","rz"])
+v =  pd.read_csv("vel_0.990.txt" ,header=None,sep='\s+' , names=["vy","vz"])
 rinicial= pd.read_csv("posiciones_init.txt",header=None,sep='\s+',names=["ry","rz"])
 vinit= pd.read_csv("velocidad_init.txt",header=None,sep='\s+', names=["vy","vz"])
-temp= pd.read_csv("temperaturas_0.995_0.50.txt",header=None,sep='\s+' ,names= ["y","z"])
-tiempo= pd.read_csv("tiemposdecol_0.995.txt",header=None,sep='\s+',names=["t"])
+temp= pd.read_csv("temperaturas_0.990_0.50.txt",header=None,sep='\s+' ,names= ["y","z"])
+tiempo= pd.read_csv("tiemposdecol_0.990.txt",header=None,sep='\s+',names=["t"])
 
 
+info= pd.read_csv("data.txt",header=None,sep='\s+')
 
+colpp = np.array(info[16])
 
-
+print(colpp[-1])
+ 
+ 
+cols =colpp[-1]
+alfa=0.990
 
 # Esta parte simplemente sirve para poder plotear a la vez
 # el fit y el histograma
@@ -94,16 +112,16 @@ plt.legend(loc=0,fontsize=20)
 # plt.ylim(0.0,1.0)
 
 
-ax2 = plt.subplots(1,1)
 
-plt.plot(r["ry"][0:len(r["ry"])-1],r["rz"][0:len(r["ry"])-1], "o")
-
-plt.plot(rinicial["ry"],rinicial["rz"], "o")
-# params , params_covariance = optimize.curve_fit(fit_func,corr['tau'],np.log(corr['corr']),method='dogbox')
-# print('param')
-# print (params)
-# print(params_covariance)
-# print(np.exp(params[0]))
+ax3 = plt.subplots(1,1)
+    # plt.plot(r["ry"][0:len(r["ry"])-1],r["rz"][0:len(r["ry"])-1], "o")
+plt.plot(r["ry"][0:len(r["ry"])-1],v["vy"][0:len(r["ry"])-1], "o",c='C0')
+# plt.plot(rinicial["ry"],vinit["vy"], "o")
+# # params , params_covariance = optimize.curve_fit(fit_func,corr['tau'],np.log(corr['corr']),method='dogbox')
+# # print('param')
+# # print (params)
+# # print(params_covariance)
+# # print(np.exp(params[0]))
 # ax1 = plt.subplots(1,1)
 # # plt.yscale("log")
 # tau=np.linspace(0,2.5,100)
@@ -112,10 +130,39 @@ plt.plot(rinicial["ry"],rinicial["rz"], "o")
 # plt.xlim(-7500,7500)
 # plt.ylim(0.5,1.0)
 plt.xlabel ( r' $y$ ', fontsize=20)
-plt.ylabel ( r' $z$ ',fontsize=20)
+plt.ylabel ( r' $v_y$ ',fontsize=20)
 # plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
-plt.title ( r' \textbf {Posiciones de las partículas confinadas entre placas}  ',fontsize=30)
-plt.savefig ('posiciones.pdf',format ='pdf',dpi=1200)
+plt.title ( r' \textbf {Espacio de fases en y}  ',fontsize=30)
+plt.savefig ('espacio_fases%i'%cols+'alfa%1.3f'%alfa+'.pdf',format ='pdf',dpi=1200)
+plt.savefig (path+'/source_images/'+'espacio_fases%i'%cols+'alfa %1.3f'%alfa+'.png',format ='png',dpi=1200)
 
-# # plt.legend(loc=0,fontsize=20)
+# # # plt.legend(loc=0,fontsize=20)
+ax2 = plt.subplots(1,1)
+# animation= plt.plot(rinicial["ry"],rinicial["rz"], "o")
+plt.xlabel ( r' $y$ ', fontsize=20)
+plt.ylabel ( r' $z$ ',fontsize=20)
+# with writer.saving(fig, "writer_test.mp4", 100):
+
+# for filename in os.listdir(path):
+#         if filename.startswith('pos_0.995_tiempo'):
+#                 ax2 = plt.subplots(1,1)
+#                 r = np.random.random()
+#                 b = np.random.random()
+#                 g = np.random.random()
+
+#                 color = (r, g, b)
+#                 r = pd.read_csv(filename,header=None,sep='\s+',names=["ry","rz"])
+            
+#                 # animation.append(r["ry"][0:len(r["ry"])-1],r["rz"][0:len(r["ry"])-1], "o",c=color)
+#                 plt.plot(r["ry"][0:len(r["ry"])-1],r["rz"][0:len(r["ry"])-1], "o",c=color)
+#                 plt.pause(0.01)
+                # writer.grab_frame()
+plt.plot(rinicial["ry"],rinicial["rz"], "o")
+plt.plot(r["ry"][0:len(r["ry"])-1],r["rz"][0:len(r["ry"])-1], "o",c='C1')
+# plt.xlabel ( r' $y$ ', fontsize=20)
+# plt.ylabel ( r' $z$ ',fontsize=20)
+# # plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
+# plt.title ( r' \textbf {Posiciones de las partículas confinadas entre placas}  ',fontsize=30)
+plt.savefig ('pos%i'%cols+'alfa%1.3f'%alfa+'.pdf',format ='pdf',dpi=1200)
+plt.savefig (path+'/source_images2/'+'pos%i'%cols+'alfa%1.3f'%alfa+'.png',format ='png',dpi=1200)
 plt.show()
