@@ -68,8 +68,10 @@ implicit none
     ! rho=0.1d00
     rho=0.03d00
     ! rho=0.2111d00
-    ! alpha=0.70
-    alpha=0.995
+    
+    ! alpha=1.00
+    alpha=0.990
+
     ! vp=0.001*temp
     vp=0.0001
     ! vp=0.0d0
@@ -106,10 +108,11 @@ implicit none
     ! rep=50000000
     ! rep=5500000 !para 1.9*sigma
     ! rep=7000000 ! para 1.3*sigma
-    rep=220000000!para 1.5*sigma
-    ! rep=7000000!para 1.5*sigma
+    ! rep=50000000!para 1.5*sigma
+    !** 1 colision equivale  a 10^5 pasos temporales
+    rep=120000000!para 1.5*sigma
     
-    !!factor 
+    !! Numero de trayectorias en las que se promedia  
     iter=1
 
 
@@ -421,8 +424,8 @@ END IF
     WRITE(*,*) '(Tiempo = ', finish-start , 'segundos.)'
 
     
-
-   
+    
+     WRITE(*,*) '(Colisiones p.p = ', colisiones(iter)/n, ')'
 
 
     DEALLOCATE(r,v,sumv,tmp,rab,vab,colisiones,tiempos,deltas)
