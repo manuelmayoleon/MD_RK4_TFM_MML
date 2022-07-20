@@ -38,9 +38,9 @@ import os, sys
 ##???? EXPLICACIONES 
 ##///  tachado
 
-density= pd.read_csv("densitypromy_0.995.txt",header=None,sep='\s+', names=['re','im'])
+density= pd.read_csv("densitypromy_0.990.txt",header=None,sep='\s+', names=['re','im'])
 
-t= pd.read_csv("tiemposdecol_0.995.txt",header=None,sep='\s+', names=['t'])
+t= pd.read_csv("tiemposdecol_0.990.txt",header=None,sep='\s+', names=['t'])
 
 regd= pd.read_csv("reg_dens.txt",header=None,sep='\s+', names=['dens','alfa'])
 info= pd.read_csv("data.txt",header=None,sep='\s+')
@@ -80,7 +80,7 @@ n=500
 l=n/(rho*(h-1.0))
 k=2*np.pi/l
 # alfa=0.95
-alfa=0.995
+alfa=0.990
 epsilon=0.5
 vp= 0.0001 
 
@@ -97,7 +97,7 @@ ts = functions.Panel(1).T_s(alfa,lin_dens) #!! Esto cambia en funcion de alfa
 print("Temperatura estacionaria")
 print(ts)
 
-rel_col_t= cols/(np.sqrt(2/np.pi)*(1+alfa)*lin_dens*np.sqrt(2*ts))
+rel_col_t= cols/(lin_dens*np.sqrt(2*ts))
 
 print("relacion tiempo con col.p.p")
 print(rel_col_t)
@@ -167,16 +167,7 @@ x=t['t']
 ##* Eliminamos el régimen anterior y posterior al incremento exponencial 
 
 colpp= np.linspace(0,cols,len(denslog)) ##! n. de col. para la última simulacion 
-# colpp= np.linspace(0,528,len(denslog)) ##! n. de col. para alfa=0.995
-# colpp= np.linspace(0,200,len(denslog)) ##! n. de col. para alfa=0.99
-# colpp= np.linspace(0,312,len(denslog)) ##! n. de col. para alfa=0.98
-# colpp= np.linspace(0,241,len(denslog)) ##! n. de col. para alfa=0.95
-# colpp= np.linspace(0,293,len(denslog)) ##! n. de col. para alfa=0.90
-# colpp= np.linspace(0,948,len(denslog)) ##! n. de col. para alfa=0.85
-# colpp= np.linspace(0,95,len(denslog)) ##! n. de col. para alfa=0.85
-# colpp= np.linspace(0,125,len(denslog)) ##! n. de col. para alfa=0.80
-# colpp= np.linspace(0,271,len(denslog)) ##! n. de col. para alfa=0.75
-# colpp= np.linspace(0,410,len(denslog)) ##! n. de col. para alfa=0.70
+
 # min_index = np.argmin(density)
 # max_index = np.argmax(density)
 # if min_index>max_index:
@@ -197,17 +188,17 @@ colpp= np.linspace(0,cols,len(denslog)) ##! n. de col. para la última simulacio
 #     colpp=colpp[min_index :max_index]
 #     density=density[min_index :max_index]
 #     denslog=denslog[min_index:max_index]
-le= len(np.where(colpp<=750)[-1])
-lh=0
-# lh= len(np.where(colpp<=1700)[-1])
-if lh != 0:  
-    colpp=colpp[le-1:lh-1]
-    density=density[le-1:lh-1]
-    denslog=denslog[le-1:lh-1]
-else: 
-    colpp=colpp[le-1:]
-    density=density[le-1:]
-    denslog=denslog[le-1:]
+# le= len(np.where(colpp<=981)[-1])
+# lh=0
+# lh= len(np.where(colpp<=1080)[-1])
+# if lh != 0:  
+#     colpp=colpp[le-1:lh-1]
+#     density=density[le-1:lh-1]
+#     denslog=denslog[le-1:lh-1]
+# else: 
+#     colpp=colpp[le-1:]
+#     density=density[le-1:]
+#     denslog=denslog[le-1:]
 #** Es la regresion en escala temporal
 #!! reg = LinearRegression().fit(x.values.reshape((-1, 1)),np.real(denslog))
 
@@ -225,6 +216,8 @@ print('model error:',model_error)
 linear_reg=reg.coef_*colpp+reg.intercept_
 
 coef=reg.coef_
+
+#?? Escribir en unarchivo .txt la
 # with open('reg_dens.txt', 'a',newline='\n') as f:
 #     writer = csv.writer(f, delimiter='\t')
 #     writer.writerows(zip( coef,[alfa]))
