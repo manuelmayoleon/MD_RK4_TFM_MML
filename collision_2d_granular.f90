@@ -40,7 +40,7 @@ implicit none
     INTEGER::rep,iter,n,iseed !numero de repeticiones que se realizan (tiempo) y numero de iteraciones  (numero de copias)
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::rab,vab !distancias y velocidades relativas
     INTEGER,DIMENSION(2)::ni !particulas que colisionan
-    INTEGER,ALLOCATABLE,DIMENSION(:)::colisiones!numero de colisiones, tiempos de relajacion por repeticiones
+    REAL,ALLOCATABLE,DIMENSION(:)::colisiones!numero de colisiones, tiempos de relajacion por repeticiones
     REAL(kind=8)::bij,qij,discr,t !bij=(ri-rj)*(vi-vj), discr es el discriminante de la solucion de segundo grado, t=tiempo de colision
     REAL(kind=8),ALLOCATABLE,DIMENSION(:)::tiempos,deltas !tiempos de colision
     REAL(kind=8), parameter :: pi = 4 * atan (1.0_8)
@@ -59,8 +59,8 @@ implicit none
        
     sigma=1.0d00
     
-    H=1.5*sigma
-    ! H=1.3*sigma
+    ! H=1.5*sigma
+    H=1.3*sigma
     ! H=1.9*sigma
     n=500
     ! rho=0.06d00
@@ -70,7 +70,7 @@ implicit none
     ! rho=0.2111d00
     
     ! alpha=1.00
-    alpha=0.990
+    alpha=0.850
 
     ! vp=0.001*temp
     vp=0.0001
@@ -110,7 +110,7 @@ implicit none
     ! rep=7000000 ! para 1.3*sigma
     ! rep=50000000!para 1.5*sigma
     !** 1 colision equivale  a 10^5 pasos temporales
-    rep=120000000!para 1.5*sigma
+    rep=30000000!para 1.5*sigma
     
     !! Numero de trayectorias en las que se promedia  
     iter=1
@@ -172,14 +172,15 @@ implicit none
     boolean=.TRUE.
     ! boolean=.FALSE.
     !?? If boolean eqv true, the program saves positions for diferent times steps     
-    pos_para_t = .TRUE.
-    ! pos_para_t = .FALSE.
+    ! pos_para_t = .TRUE.
+    pos_para_t = .FALSE.
     
 
-    ! If densz_bool eqv false, the density is not calculated
-    !else, the density is calculated
-    densz_bool=.TRUE.
-    ! densz_bool=.FALSE.
+    !?? If densz_bool eqv false, the density is not calculated
+    !??else, the density is calculated
+    ! densz_bool=.TRUE.
+    densz_bool=.FALSE.
+
     densz=0.0
     denspromz=0.0
     stdevz=0.0
@@ -191,11 +192,15 @@ implicit none
 
        
 
-        !inicializo los tiempos 
+        !!inicializo los tiempos 
         t=0.0
         deltas(1)=0.0
+        !!inicializo los tiempos 
+        
         CALL inicializacion2d(n,longy,H,temp,tempz,r,v)
+        
         !PRINT*,'temperatura en y', 0.5d00*sum(v(:,1)**2)/n, 'temperatura en z' , 0.5d00*sum(v(:,2)**2)/n
+        
         DO j=1,rep
             ni=0
             colt = HUGE(1.0)
@@ -218,7 +223,7 @@ implicit none
 
  
                  !obtenemos las densidades para todo t en el eje horizontal. r(:,1) :eje y. r(:,2) :eje z.  
-               
+            
             density(i,j,1)=sum(cos(num_onda*r(:,1)) )
             density(i,j,2)=sum(sin(num_onda*r(:,1)) )
     
@@ -233,7 +238,7 @@ implicit none
             IF (ni(2)<=n .AND. ni(2)>0) THEN
              
             CALL collide(ni(1),ni(2))
-            colisiones(i)=colisiones(i)+1
+            colisiones(i)=colisiones(i)+1.d00
             
             !medimos solo las densidades cuando colisionan particulas entre si
             !medimos cuando el sistema esta en equilibrio térmico, bajo el criterio de que la diferencia entre temperaturas sea menor que 0.1
@@ -270,20 +275,7 @@ implicit none
                 sumv(i,j,l)=sum(v(:,l)**2)/n
                END DO
 
-               !Obtenemos el tiempo medio entre colisiones
-                ! IF (j==1) THEN
-                   
-                !    deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(SQRT(sumv(i,j,1))*tiempos(j))
-                
-                
-                ! ELSE  
-                    
-                !     deltas(j)=((2*(1+alpha)*sigma*epsilon*rho)/SQRT(pi))*(tiempos(j)-tiempos(j-1))*SQRT(sumv(i,j,1))
 
-                !     ! DO l=1,j-1
-                !     !     deltas(j)=deltas(j)+deltas(l)
-                !     ! END DO 
-                ! END IF
 
             IF ((j>=rep-10).AND. (pos_para_t .EQV. .TRUE.) ) THEN 
               CALL save_med_distribution(alfa,j)
@@ -300,9 +292,9 @@ implicit none
 
         !!!promediamos por el numero total de colisiones!!!!!!!!!!!!!!!!!!!!!!!!! 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        densz(i,:)=densz(i,:)/real(colisiones(i))
+        densz(i,:)=densz(i,:)/colisiones(i)
        
-       
+       !! Vemos si se superponen las particulas
         CALL superpuesto()
        
 
@@ -320,7 +312,7 @@ implicit none
     END DO
     
     
-    !Calculamos la temperatura promedio 
+    !!Calculamos la temperatura promedio 
     DO l=1,rep
         DO m=1,2
         tmp(l,m)=sum(sumv(:,l,m))/iter
@@ -329,7 +321,7 @@ implicit none
         END DO
     END DO 
 
-    ! Calculamos la densidad promedio para cada tiempo dado
+    !!! Calculamos la densidad promedio para cada tiempo dado
     DO l=1,rep
         DO m=1,2
         densityprom(l,m)= sum(density(:,l,m))/iter
@@ -343,10 +335,10 @@ implicit none
     !         denspromz(l)=denspromz(l)+sum(densz(:,m,l))/(iter*(rep-tiempo_relajacion))
     !     END DO 
     ! END DO 
+! ! Calculamos la densidad promedio junto con la desviación estándar en el eje z
 IF (densz_bool .EQV. .TRUE.) THEN 
     call calc_densz_prom(iter,partz)
 END IF
-! ! Calculamos la densidad promedio junto con la desviación estándar en el eje z
 !     DO l=1,partz
 
 !             denspromz(l)=denspromz(l)+sum(densz(:,l))/(iter)
@@ -362,7 +354,7 @@ END IF
 ! ! en las que hemos dividido el sistema para medir. 
 !     denspromz(:)=denspromz(:)*real(partz)/(H-sigma)
 !     stdevz(:)=stdevz(:)*real(partz)/(H-sigma)
-
+!! Guardo las temperaturas 
     OPEN(9,FILE='temperaturas_' // trim(adjustl(alfa)) // '_' // trim(adjustl(eps)) // '.txt',STATUS='unknown')
     DO l=1,rep
         WRITE(9,*) tmp(l,1), tmp(l,2)
@@ -370,20 +362,16 @@ END IF
     CLOSE(9)   
 
 
-    ! OPEN(16,FILE='densidad_horizontal_' // trim(adjustl(alfa)) // '_' // trim(adjustl(eps)) // '.txt',STATUS='unknown')
-    ! DO l=1,rep
-    !     WRITE(16,*) densityprom(l,1), densityprom(l,2)
-    ! END DO 
-    ! CLOSE(16)   
 
-        
+
+!! Guardo las posiciones finales 
 
     OPEN(10,FILE='pos_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')   
         DO l=1,n
          WRITE(10,*) r(l,1), r(l,2)
         END DO
     CLOSE(10) 
-
+!! Guardo las velocidades finales 
         OPEN(10,FILE='vel_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')   
         DO l=1,n
          WRITE(10,*) v(l,1), v(l,2)
@@ -392,21 +380,18 @@ END IF
 
 
 
-    
+!! Guardo los tiempos de colision 
+
     OPEN(12,FILE='tiemposdecol_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown') 
     DO l=1,rep
         WRITE(12,*) tiempos(l)
     END DO
     CLOSE(12) 
     
-    ! OPEN(13,FILE='sparam_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
-    ! DO l=1,rep
-    !     WRITE(13,*) deltas(l)
-    ! END DO
-    ! CLOSE(13)
 
 
 
+!! Guardo la densidad en el eje y 
     OPEN(66,FILE='densitypromy_' // trim(adjustl(alfa)) // '.txt',STATUS='unknown')
     DO l=1,rep
         WRITE(66,*)   densityprom(l,1), densityprom(l,2) 
@@ -425,7 +410,7 @@ END IF
 
     
     
-     WRITE(*,*) '(Colisiones p.p = ', colisiones(iter)/n, ')'
+     WRITE(*,*) '(Colisiones p.p = ', colisiones(iter)/real(n), ')'
 
 
     DEALLOCATE(r,v,sumv,tmp,rab,vab,colisiones,tiempos,deltas)
@@ -474,7 +459,7 @@ END IF
             ,ACTION='READWRITE')
     
             write(35,* ) 'N', n, 'T_y', temp, 'T_z', tempz, 'epsilon', epsilon,  ' alpha    '&
-            , alpha, ' vp ', vp  , ' rho ', rho , ' colisiones p.p. ', colisiones(iter)/n , ' tiempo ', rep
+            , alpha, ' vp ', vp  , ' rho ', rho , ' colisiones p.p. ', colisiones(iter)/real(n) , ' tiempo ', rep
             write(35,* ) ' '
           
         end subroutine save_data_file
@@ -488,17 +473,20 @@ END IF
             ! The colliding pair (i,j) is assumed to be in contact already
 
             REAL(kind=8), DIMENSION(2) :: rij, vij
-            REAL(kind=8)               :: factor
+            REAL(kind=8)               :: factor, modulus
 
             rij(:) = r(a,:) - r(b,:)
             rij(1) = rij(1) - longy*ANINT ( rij(1)/(longy) ) ! Separation vector
             vij(:) = v(a,:) - v(b,:)           ! Relative velocity
 
-            factor = DOT_PRODUCT ( rij, vij )
+            factor = DOT_PRODUCT ( rij, vij ) !dot product of relative velocities and relative positions
+            ! modulus = DOT_PRODUCT (rij,rij) !modulus of relative positions
+            modulus = sigma !! El módulo es el diámetro de las partículas. 
+            
             if(granular .EQV. .TRUE.) THEN 
-                vij    = -((1.0d0+alpha)*factor * rij)/(2.0d0)
+                vij    = -((1.0d0+alpha)*factor * rij)/(2.0d0*modulus)
             ELSE
-                vij    = -factor * rij
+                vij    = -factor * rij / modulus
             END IF
 
             v(a,:) = v(a,:) + vij
@@ -522,8 +510,11 @@ END IF
 
                 !! FIRST WAY TO COMPUTE 
 
-                    IF (bij<0 ) THEN
-                    discr=bij**2-(SUM(rab**2)-sigma**2)*SUM(vab**2)
+                    ! IF (bij<0.0d00 ) THEN !Same as sign(1.0,bij)<0
+                    IF (sign(1.0d00,bij)<0) THEN 
+                    ! PRINT*, sign(1.0d00,bij)
+                    ! PRINT*, bij
+                        discr=bij**2-(SUM(rab**2)-sigma**2)*SUM(vab**2)
                     IF( discr>0.0) THEN ! si colisiona con la sucesiva particula
                         ! tcol = ( -bij - SQRT ( discr ) ) / ( SUM ( vab**2 ) )
                     !! ALTERNATIVE WAY 
@@ -555,8 +546,9 @@ END IF
                 rab(1)=rab(1)-longy*ANINT(rab(1)/(longy)) ! condiciones periodicas
                 vab(:)=v(c,:)-v(n,:)   !calculamos velocidades relativas
                 bij    = DOT_PRODUCT ( rab, vab )   ! obtenemos el producto escalar (ri-rj)*(vi-vj)
-                IF (bij<0.0d0 ) THEN
-                discr=bij**2-(SUM(rab**2)-sigma**2)*SUM(vab**2)
+                ! IF (bij<0.0d0 ) THEN
+                IF (sign(1.0d00,bij)<0) THEN 
+                    discr=bij**2-(SUM(rab**2)-sigma**2)*SUM(vab**2)
                 IF( discr>0.0d0) THEN ! si colisiona con la sucesiva particula
                     ! tcol = ( -bij - SQRT ( discr ) ) / ( SUM ( vab**2 ) )
                      !! ALTERNATIVE WAY 
@@ -718,7 +710,7 @@ END IF
     
                 stdevz(l)=sqrt(sum(densz(:,l)**2)/iteraciones-denspromz(l)**2)
     
-                Print*,"standard deviation", stdevz(l)
+                ! Print*,"standard deviation", stdevz(l)
     
             END DO 
             ! para determinar la densidad promedio y su desviación estándar en el eje z debemos finalmente dividir entre las secciones
