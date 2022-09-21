@@ -11,6 +11,8 @@ from matplotlib.transforms import (
 # Import math Library
 import math 
 
+
+
 from sympy import *
 
 # PARA USAR A LA HORA DE GUARDAR DOS COLUMNAS EN UN ARCHIVO
