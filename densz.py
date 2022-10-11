@@ -53,10 +53,9 @@ zmedia=(2*z-sigma)/(2*sigma)
 
 zmedia2=(2*zmd-sigma)/(2*sigma)
 
-### No hay que hacer esto si ya hemos dividido por la separacion relativa entre particiones para medir 
-
-
-# densz=particion*densz/((h-1.0))
+###! No hay que hacer esto si ya hemos dividido por la separacion relativa entre particiones para medir 
+# ! PARA PONERLO SIN ADIMENSIONALIZAR POR LA LONGITUD HORIZONTAL 
+# densz=particion*densz/(((h-1.0))*l)
 
 # sdev=particion*sdev/((h-1.0)*np.sqrt(tray))
 
@@ -127,9 +126,9 @@ with open('dens_teo.txt', 'w') as f:
 plt.plot(zmedia,l*profile_density(h,n,z,l,a,b),color='C0',label="$n_z$ ")
 # plt.plot(zmedia,profile_density_2(h,z,a,norma),color='C2',label="$n_z$ ")
 
-plt.errorbar(zmedia2, densz, yerr=sdev, color='C1',marker="o",linestyle="",label="$n_z$ (MD)")    
+# plt.errorbar(zmedia2, densz, yerr=sdev, color='C1',marker="o",linestyle="",label="$n_z$ (MD)")    
 
-# plt.plot(zmedia2,densz,color='C1',marker="o",linestyle="",label="$n_z$ (MD)")      
+plt.plot(zmedia2,densz,color='C1',marker="o",linestyle="",label="$n_z$ (MD)")      
 plt.grid(color='k', linestyle='--', linewidth=0.5,alpha=0.2)
 plt.xlabel ( r' $\overline{z}$ ', fontsize=30)
 plt.ylabel ( r' $n_2$ ',rotation=0.0,fontsize=30)
